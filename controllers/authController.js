@@ -4,7 +4,7 @@ const {
   getResetTokenService,
   resetPasswordService,
 } = require("../services/authService");
-const { sendResetPasswordEmailService } = require("../services/emailService");
+const { sendEmailService } = require("../services/emailService");
 
 const register = async (req, res) => {
   try {
@@ -32,7 +32,7 @@ const forgotPassword = async (req, res) => {
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-    await sendResetPasswordEmailService(email, resetLink);
+    await sendEmailService(email, "passwordReset", resetLink);
 
     res.status(200).json({ success: true, resetToken });
   } catch (err) {

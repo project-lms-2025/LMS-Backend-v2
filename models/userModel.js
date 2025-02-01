@@ -10,15 +10,23 @@ const createUser = async (user) => {
     Item: {
       email: { S: user.email },
       password: { S: user.password },
+      is_email_verified: { BOOL: false },
+      exam_registered_for: { S: user.exam_registered_for },
     },
   };
-  console.log(user)
+
   const userDataParams = {
     TableName: process.env.USER_DATA_TABLE,
     Item: {
       email: { S: user.email },
       name: { S: user.name },
-      profile_picture: { S: user.profile_picture },
+      address: { S: user.address },
+      pincode: { S: user.pincode },
+      state: { S: user.state },
+      marks10: { N: user.marks10.toString() },
+      marks12: { N: user.marks12.toString() },
+      higher_degree_score: user.higher_degree_score ? { N: user.higher_degree_score.toString() } : { NULL: true },
+      previous_year_score: user.previous_year_score ? { N: user.previous_year_score.toString() } : { NULL: true },
     },
   };
 
@@ -26,9 +34,16 @@ const createUser = async (user) => {
     TableName: process.env.USER_DOCS_TABLE,
     Item: {
       email: { S: user.email },
-      pdf: { S: user.pdf },
+      profile_picture_url: { S: user.profile_picture },
+      pdf10th: user.pdf10th ? { S: user.pdf10th } : { NULL: true },
+      pdf12th: user.pdf12th ? { S: user.pdf12th } : { NULL: true },
+      higher_degree_urls: user.higher_degree_urls && user.higher_degree_urls.length > 0 
+        ? { L: user.higher_degree_urls.map(url => ({ S: url })) }
+        : { NULL: true },
+      previous_year_scorecard_url: user.previous_year_scorecard_url ? { S: user.previous_year_scorecard_url } : { NULL: true },
     },
   };
+
 
   try {
     const authCommand = new PutItemCommand(authParams);
@@ -43,6 +58,7 @@ const createUser = async (user) => {
     return { success: false, message: 'Error creating user' };
   }
 };
+
 
 
 const getUserByEmail = async (email) => {

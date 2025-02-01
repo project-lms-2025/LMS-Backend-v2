@@ -14,7 +14,10 @@ paths:
       tags: 
         - auth
       summary: Register a new user
+      description: Allows users to register by providing personal information, academic details, and upload documents.
+      operationId: registerUser
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -22,19 +25,78 @@ paths:
               properties:
                 name:
                   type: string
+                  example: John Doe
+                  description: Full name of the user.
                 email:
                   type: string
+                  format: email
+                  example: user@example.com
+                  description: Email address of the user.
                 password:
                   type: string
+                  example: yourPassword123
+                  description: The password chosen by the user.
+                address:
+                  type: string
+                  example: 123 Main St, ABC City
+                  description: Residential address of the user.
+                pincode:
+                  type: string
+                  example: 123456
+                  description: Postal code of the user's address.
+                state:
+                  type: string
+                  example: State A
+                  description: The state the user resides in.
+                marks10:
+                  type: integer
+                  example: 85
+                  description: Marks obtained in 10th grade.
+                marks12:
+                  type: integer
+                  example: 90
+                  description: Marks obtained in 12th grade.
+                higherDegreeScore:
+                  type: integer
+                  example: 88
+                  description: Marks/score obtained in higher degree (e.g., Bachelor's degree).
+                previousYearScore:
+                  type: integer
+                  example: 92
+                  description: Marks obtained in the previous year.
+                examRegisteredFor:
+                  type: string
+                  example: GATE CS
+                  description: The exam the user is registered for (e.g., GATE CS).
                 profilePicture:
                   type: string
                   format: binary
-                pdf:
+                  description: The user's profile picture in JPEG or PNG format.
+                pdf10th:
                   type: string
                   format: binary
+                  description: PDF document of the user's 10th grade certificate.
+                pdf12th:
+                  type: string
+                  format: binary
+                  description: PDF document of the user's 12th grade certificate.
+                pdfHigherDegrees:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: One or more PDF documents of the user's higher degree certificates.
+                pdfPreviousYear:
+                  type: string
+                  format: binary
+                  description: PDF document of the user's previous year certificate.
       responses:
-        '201':
+        '200':
           description: User registered successfully
+        '400':
+          description: Bad request, missing or invalid data
+        '500':
+          description: Internal server error
 
   /api/auth/login:
     post:
@@ -94,7 +156,117 @@ paths:
           description: Missing reset token or new password
         '500':
           description: Internal Server Error
+  /api/otp/send:
+    post:
+      tags: 
+        - auth
+      summary: Send OTP to the user's email for verification
+      description: This endpoint sends an OTP to the provided email address for email verification.
+      operationId: sendEmailVerification
+      tags:
+        - Email Verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+              required:
+                - email
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'OTP sent to your email'
+        '400':
+          description: Missing email or invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Email is required'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Failed to send OTP'
 
+  /api/otp/verify:
+    post:
+      tags: 
+        - auth
+      summary: Verify the OTP entered by the user
+      description: This endpoint verifies the OTP entered by the user for email verification.
+      operationId: verifyEmailOtp
+      tags:
+        - Email Verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                otp:
+                  type: string
+                  example: "123456"
+              required:
+                - email
+                - otp
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Email verified successfully'
+        '400':
+          description: Invalid OTP or OTP expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'OTP has expired'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Failed to verify OTP'
   # User routes
   /api/user/update:
     put:
