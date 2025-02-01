@@ -27,7 +27,8 @@ const login = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const resetToken = await getResetTokenService(req.body.email);
+    const email = req.body.email
+    const resetToken = await getResetTokenService(email);
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 

@@ -23,13 +23,15 @@ const registerUserService = async (userData, files) => {
 };
 
 const loginUserService = async (email, password) => {
-  const user = await getUserByEmail(email);
-  if (!user) throw new Error('Invalid credentials');
+  const response = await getUserByEmail(email);
+  if (!response.success) throw new Error(response.message || response.error);
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const user = response.data
+
+  const isMatch = await bcrypt.compare(password, user.password.S);
   if (!isMatch) throw new Error('Invalid credentials');
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+  const token = jwt.sign({ email: user.email.S }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
   return token;
 };
 
@@ -37,11 +39,10 @@ const loginUserService = async (email, password) => {
 const resetPasswordService = async (resetToken, newPassword) => {
   try {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    const userId = decoded.id;
-
+    const email = decoded.email
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    const result = await updatePassword(userId, hashedPassword);
+    const result = await updatePassword(email, hashedPassword);
 
     if (result.success) {
       return { success: true, message: 'Password reset successfully' };
@@ -56,10 +57,12 @@ const resetPasswordService = async (resetToken, newPassword) => {
 
 
 const getResetTokenService = async (email) => {
-  const user = await getUserByEmail(email);
-  if (!user) throw new Error('User not found');
+  const response = await getUserByEmail(email);
+  if (!response.success) throw new Error(response.message || response.error);
 
-  const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '10m' });
+  const user = response.data
+
+  const resetToken = jwt.sign({ email: user.email.S }, process.env.JWT_SECRET, { expiresIn: '10m' });
   return resetToken;
 };
 

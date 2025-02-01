@@ -62,11 +62,11 @@ const getUserByEmail = async (email) => {
 
     return {
       success: true,
-      data: { auth: authItem},
+      data: authItem,
     };
   } catch (err) {
     console.error('Error fetching user from DynamoDB:', err);
-    return { success: false, message: 'Error fetching user' };
+    return { success: false, error: 'Error fetching user' };
   }
 };
 
@@ -135,11 +135,11 @@ const deleteUser = async (email) => {
   }
 };
 
-const updatePassword = async (userId, newPassword) => {
+const updatePassword = async (email, newPassword) => {
   const params = {
     TableName: process.env.AUTH_TABLE,
     Key: {
-      userId: { S: userId },
+      email: { S: email },
     },
     UpdateExpression: 'SET password = :password',
     ExpressionAttributeValues: {
@@ -147,6 +147,7 @@ const updatePassword = async (userId, newPassword) => {
     },
     ReturnValues: 'ALL_NEW',
   };
+
 
   try {
     const command = new UpdateItemCommand(params);
