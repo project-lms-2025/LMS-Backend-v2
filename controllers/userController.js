@@ -12,7 +12,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    await deleteUserService(req.user.id);
+    await deleteUserService(req.user.email);
     res.clearCookie('token');
     res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (err) {

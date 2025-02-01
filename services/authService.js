@@ -2,27 +2,27 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createUser, getUserByEmail } = require('../models/userModel');
 const { uploadFile } = require('../config/s3');
+const { updatePassword } = require('../models/userModel');
 
-const registerUser = async (userData, files) => {
+
+const registerUserService = async (userData, files) => {
   const { name, email, password } = userData;
 
   const existingUser = await getUserByEmail(email);
-  if (existingUser) throw new Error('User already exists');
+  if (existingUser.success) throw new Error('User already exists');
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await createUser({ name, email, password: hashedPassword });
-
   const profilePic = await uploadFile(files.profilePicture[0]);
   const pdf = await uploadFile(files.pdf[0]);
+  console.log(profilePic,pdf)
 
-  // Update user with file locations
-  user.profile_picture = profilePic.Location;
-  user.pdf = pdf.Location;
+  const user = await createUser({ name, email, password: hashedPassword, profile_picture:profilePic.Location, pdf:pdf.Location });
+
 
   return user;
 };
 
-const loginUser = async (email, password) => {
+const loginUserService = async (email, password) => {
   const user = await getUserByEmail(email);
   if (!user) throw new Error('Invalid credentials');
 
@@ -33,9 +33,8 @@ const loginUser = async (email, password) => {
   return token;
 };
 
-const { updatePassword } = require('../models/userModel'); // Import the function
 
-const resetPassword = async (resetToken, newPassword) => {
+const resetPasswordService = async (resetToken, newPassword) => {
   try {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     const userId = decoded.id;
@@ -56,7 +55,7 @@ const resetPassword = async (resetToken, newPassword) => {
 };
 
 
-const getResetToken = async (email) => {
+const getResetTokenService = async (email) => {
   const user = await getUserByEmail(email);
   if (!user) throw new Error('User not found');
 
@@ -64,4 +63,4 @@ const getResetToken = async (email) => {
   return resetToken;
 };
 
-module.exports = { registerUser, loginUser, getResetToken, resetPassword };
+module.exports = { registerUserService, loginUserService, getResetTokenService, resetPasswordService };

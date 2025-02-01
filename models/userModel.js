@@ -8,16 +8,15 @@ const createUser = async (user) => {
   const authParams = {
     TableName: process.env.AUTH_TABLE,
     Item: {
-      userId: { S: user.id },
       email: { S: user.email },
       password: { S: user.password },
     },
   };
-
+  console.log(user)
   const userDataParams = {
     TableName: process.env.USER_DATA_TABLE,
     Item: {
-      userId: { S: user.id },
+      email: { S: user.email },
       name: { S: user.name },
       profile_picture: { S: user.profile_picture },
     },
@@ -26,7 +25,7 @@ const createUser = async (user) => {
   const userDocsParams = {
     TableName: process.env.USER_DOCS_TABLE,
     Item: {
-      userId: { S: user.id },
+      email: { S: user.email },
       pdf: { S: user.pdf },
     },
   };
@@ -100,26 +99,35 @@ const updateUser = async (userId, updatedFields) => {
   }
 };
 
-const deleteUser = async (userId) => {
+const deleteUser = async (email) => {
   const authParams = {
     TableName: process.env.AUTH_TABLE,
     Key: {
-      userId: { S: userId },
+      email: { S: email },
     },
   };
 
   const userDataParams = {
     TableName: process.env.USER_DATA_TABLE,
     Key: {
-      userId: { S: userId },
+      email: { S: email },
+    },
+  };
+
+  const userDocsParams = {
+    TableName: process.env.USER_DOCS_TABLE,
+    Key: {
+      email: { S: email },
     },
   };
 
   try {
     const authCommand = new DeleteItemCommand(authParams);
     const userDataCommand = new DeleteItemCommand(userDataParams);
+    const userDocsCommand = new DeleteItemCommand(userDocsParams);
     await ddbClient.send(authCommand);
     await ddbClient.send(userDataCommand);
+    await ddbClient.send(userDocsCommand);
     return { success: true, message: 'User deleted successfully' };
   } catch (err) {
     console.error('Error deleting user from DynamoDB:', err);

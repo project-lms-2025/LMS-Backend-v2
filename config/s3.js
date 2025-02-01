@@ -21,8 +21,8 @@ const uploadFile = async (file) => {
 
   try {
     const command = new PutObjectCommand(params);
-    await s3.send(command);
-    return { success: true };
+    const data = await s3.send(command);
+    return { success: true , Location:`https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${params.Key}`};
   } catch (err) {
     console.error('Error uploading file to S3:', err);
     return { success: false, message: 'Error uploading file' };
