@@ -299,6 +299,70 @@ paths:
       responses:
         '200':
           description: User deleted successfully
+  /api/user/{email}:
+    get:
+      tags: 
+        - user
+      summary: Get user details
+      description: Fetches the user details from the LMS-AUTH, LMS-USER-DATA, and LMS-USER-DOCS tables based on the provided email.
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: The email of the user to fetch data for.
+          schema:
+            type: string
+            example: "test@example.com"
+      responses:
+        '200':
+          description: Successful response with user data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: "test@example.com"
+                  authData:
+                    type: object
+                    example: { "email": "test@example.com" }
+                  userData:
+                    type: object
+                    example: { "email": "test@example.com" }
+                  userDocs:
+                    type: object
+                    example: { "email": "test@example.com" }
+        '400':
+          description: Invalid email format or missing email.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid email format"
+        '404':
+          description: User not found in any of the tables.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No data found for the given email"
+        '500':
+          description: Internal server error or error fetching user data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error fetching user details"
 
 components:
   securitySchemes:

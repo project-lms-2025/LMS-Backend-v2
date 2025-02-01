@@ -1,5 +1,6 @@
 const { updateUserService, deleteUserService } = require('../services/userService');
 const { protect } = require('../middleware/authMiddleware');
+const {getUserDataByEmail} = require('../models/userModel')
 
 const updateUser = async (req, res) => {
   try {
@@ -20,4 +21,22 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { updateUser, deleteUser };
+const getUserDetails = async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const { authData, userData, userDocs } = await getUserDataByEmail(email);
+    const userDetails = {
+      email,
+      authData,
+      userData,
+      userDocs,
+    };
+    res.status(200).json(userDetails);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Error fetching user details' });
+  }
+};
+
+module.exports = { updateUser, deleteUser, getUserDetails };

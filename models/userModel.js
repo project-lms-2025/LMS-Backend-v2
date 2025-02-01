@@ -177,4 +177,42 @@ const updatePassword = async (email, newPassword) => {
 
 
 
-module.exports = { createUser, getUserByEmail, updateUser, deleteUser, updatePassword };
+const getDataFromTable = async (tableName, key) => {
+  const params = {
+    TableName: tableName,
+    Key: {
+      email: { S: key.email },
+    },
+  };
+
+
+  try {
+    const command = new GetItemCommand(params);
+    const result = await ddbClient.send(command);
+
+    if (!result.Item) {
+      throw new Error(`No data found for key: ${JSON.stringify(key)}`);
+    }
+
+    const item = result.Item;
+    return item;
+  } catch (error) {
+    console.error(`Error fetching data from ${tableName}:`, error);
+    throw error;
+  }
+};
+
+const getUserDataByEmail = async (email) => {
+  try {
+    const authData = await getDataFromTable(process.env.AUTH_TABLE, { email });
+    const userData = await getDataFromTable(process.env.USER_DATA_TABLE, { email });
+    const userDocs = await getDataFromTable(process.env.USER_DOCS_TABLE, { email });
+    return { authData, userData, userDocs };
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw new Error('Error fetching user details');
+  }
+};
+
+
+module.exports = { createUser, getUserByEmail, updateUser, deleteUser, updatePassword, getUserDataByEmail};
