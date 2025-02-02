@@ -7,7 +7,7 @@ const { updatePassword } = require('../models/userModel');
 
 const registerUserService = async (userData, files) => {
   console.log(userData)
-  const { name, email, password, address, pincode, state, marks10, marks12, examRegisteredFor, higherDegreeScore, previousYearScore } = userData;
+  const { name, email, password, gender, phoneNumber, dob, is_email_verified, address, pincode, state, marks10, marks12, examRegisteredFor, higherDegreeScore, previousYearScore } = userData;
 
   const existingUser = await getUserByEmail(email);
   if (existingUser.success) throw new Error('User already exists');
@@ -24,6 +24,10 @@ const registerUserService = async (userData, files) => {
     name,
     email,
     password: hashedPassword,
+    gender: gender,
+    phoneNumber: phoneNumber,
+    dob: dob,
+    is_email_verified: is_email_verified,
     profile_picture: profilePic.Location,
     pdf10th: degree10 ? degree10.Location : null,
     pdf12th: degree12 ? degree12.Location : null,

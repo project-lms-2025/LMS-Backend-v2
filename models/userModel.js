@@ -19,6 +19,10 @@ const createUser = async (user) => {
     TableName: process.env.USER_DATA_TABLE,
     Item: {
       email: { S: user.email },
+      gender: { S: user.gender },
+      phoneNumber: { S: user.phoneNumber },
+      dob: { S: user.dob },
+      is_email_verified: { S: user.is_email_verified },
       name: { S: user.name },
       address: { S: user.address },
       pincode: { S: user.pincode },
