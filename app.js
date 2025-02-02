@@ -6,9 +6,18 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const otpRoutes = require('./routes/otpRoutes')
 const { errorHandler } = require('./middleware/errorMiddleware');
-
+const cors = require('cors')
 const app = express();
 const swaggerDocument = YAML.load('./swagger.yaml');
+
+app.use(cors({
+    origin: ["http://127.0.0.1:5173", "http://localhost:5173"], 
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+    credentials: true
+}));
+
+app.options("*", cors());
 
 app.use(express.json());
 app.use(cookieParser());
