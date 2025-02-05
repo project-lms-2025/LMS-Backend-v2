@@ -1,12 +1,15 @@
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const otpRoutes = require('./routes/otpRoutes')
-const { errorHandler } = require('./middleware/errorMiddleware');
-const cors = require('cors')
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+import authRoutes from './routes/AuthRoutes.js';
+import userRoutes from './routes/UserRoutes.js';
+import otpRoutes from './routes/OtpRoutes.js'
+import { errorHandler } from './middleware/ErrorMiddleware.js';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+
 const app = express();
 const swaggerDocument = YAML.load('./swagger.yaml');
 

@@ -1,5 +1,5 @@
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const dotenv = require('dotenv');
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -11,4 +11,4 @@ const ddbClient = new DynamoDBClient({
   },
 });
 
-module.exports = { ddbClient };
+export default ddbClient;
