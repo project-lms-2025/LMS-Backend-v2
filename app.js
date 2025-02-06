@@ -8,6 +8,7 @@ import otpRoutes from './routes/OtpRoutes.js'
 import { errorHandler } from './middleware/ErrorMiddleware.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import AuthMiddleware from './middleware/AuthMiddleware.js';
 
 
 const app = express();
@@ -22,13 +23,14 @@ app.use(cors({
 
 app.options("*", cors());
 
+
 app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/user', AuthMiddleware.auth, userRoutes);
 app.use('/api/otp/', otpRoutes)
 
 app.use(errorHandler);

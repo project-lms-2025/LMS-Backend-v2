@@ -22,11 +22,10 @@ class UserController {
 
   static async getUserDetails(req, res) {
     try {
-      const userDetails = await UserService.getUserDataByEmail(req.params.email);
-      res.status(200).json(userDetails);
+      const userDetails = await UserService.getUserDataByEmail(req.email);
+      return res.status(200).json(userDetails);
     } catch (error) {
-      console.error("Error fetching user data:", error);
-      res.status(500).json({ message: "Error fetching user details" });
+      return res.status(500).json({ success: false, message: "Error fetching user details" });
     }
   }
 }

@@ -17,6 +17,8 @@ router.post(
   AuthController.register
 );
 router.post("/login", AuthController.login);
+router.post("/login-with-otp", AuthController.loginWithEmailOtp);
+router.post("/send-login-otp", AuthController.sendLoginOtp);
 router.post("/logout", AuthController.logout);
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/reset-password", AuthController.resetPassword);

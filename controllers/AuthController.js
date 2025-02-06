@@ -16,12 +16,46 @@ class authController {
     try {
       const token = await AuthService.loginUserService(
         req.body.email,
+        req.body.deviceType,
         req.body.password
       );
       res.cookie("token", token, { httpOnly: true });
       res.status(200).json({ success: true, token });
     } catch (err) {
       res.status(400).json({ success: false, message: err.message });
+    }
+  }
+  static async sendLoginOtp(req, res){
+    const { email } = req.body;
+
+    try {
+      const result = await AuthService.generateEmailOtpService(email);
+      
+      if (result.status === 200) {
+        return res.status(200).json({ message: result.message });
+      } else {
+        return res.status(result.status).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      return res.status(500).json({ message: 'Something went wrong while sending OTP' });
+    }
+  }
+
+  static async loginWithEmailOtp(req, res) {
+    const { email, otp, deviceType } = req.body;
+
+    try {
+      const result = await AuthService.loginWitEmailService(email, deviceType, otp);
+
+      if (result.status === 200) {
+        return res.status(200).json({ message: result.message, authToken: result.authToken });
+      } else {
+        return res.status(result.status).json({ message: result.message });
+      }
+    } catch (error) {
+      console.error('Error during login with OTP:', error);
+      return res.status(500).json({ message: 'Something went wrong while logging in' });
     }
   }
 

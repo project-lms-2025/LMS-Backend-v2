@@ -4,11 +4,11 @@ import  { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 const client = new DynamoDBClient({ region: process.env.AWS_REGION });
 
 class UserSession {
-  static async createOrUpdateSession(userId, deviceType, token) {
+  static async createOrUpdateSession(email, deviceType, token) {
     const params = {
-      TableName: 'UserSessions',
+      TableName: process.env.SESSIONS_TABLE,
       Item: marshall({
-        userId,
+        email,
         deviceType,
         token,
         createdAt: Date.now(),
@@ -17,11 +17,11 @@ class UserSession {
     await client.send(new PutItemCommand(params));
   }
 
-  static async getSessionByUserAndDevice(userId, deviceType) {
+  static async getSessionByUserAndDevice(email, deviceType) {
     const params = {
-      TableName: 'UserSessions',
+      TableName: process.env.SESSIONS_TABLE,
       Key: marshall({
-        userId,
+        email,
         deviceType,
       }),
     };
@@ -29,11 +29,11 @@ class UserSession {
     return result.Item ? unmarshall(result.Item) : null;
   }
 
-  static async deleteSession(userId, deviceType) {
+  static async deleteSession(email, deviceType) {
     const params = {
-      TableName: 'UserSessions',
+      TableName: process.env.SESSIONS_TABLE,
       Key: marshall({
-        userId,
+        email,
         deviceType,
       }),
     };

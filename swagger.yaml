@@ -7,14 +7,16 @@ tags:
     description: Authentication related operations (login, register, etc.)
   - name: user
     description: User related operations (update, delete, etc.)
+  - name: otp
+    description: OTP related operations (send, verify, etc.)
 paths:
   # Auth routes
   /api/auth/register:
     post:
-      tags: 
+      tags:
         - auth
       summary: Register a new user
-      description: Allows users to register by providing personal information, academic details, and upload documents.
+      description: Allows users to register by providing personal information, academic details, and uploading documents.
       operationId: registerUser
       requestBody:
         required: true
@@ -116,10 +118,9 @@ paths:
         '500':
           description: Internal server error
 
-
   /api/auth/login:
     post:
-      tags: 
+      tags:
         - auth
       summary: Login a user
       requestBody:
@@ -135,10 +136,29 @@ paths:
       responses:
         '200':
           description: Logged in successfully
+        '400':
+          description: Invalid credentials
+        '500':
+          description: Internal server error
+
+  /api/auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logout a user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
 
   /api/auth/forgot-password:
     post:
-      tags: 
+      tags:
         - auth
       summary: Request password reset
       requestBody:
@@ -152,10 +172,14 @@ paths:
       responses:
         '200':
           description: Password reset email sent
+        '400':
+          description: Missing email or invalid input
+        '500':
+          description: Internal server error
 
   /api/auth/reset-password:
     post:
-      tags: 
+      tags:
         - auth
       summary: Reset password
       requestBody:
@@ -174,16 +198,15 @@ paths:
         '400':
           description: Missing reset token or new password
         '500':
-          description: Internal Server Error
+          description: Internal server error
+
+  # OTP routes
   /api/otp/send:
     post:
-      tags: 
-        - auth
+      tags:
+        - otp
       summary: Send OTP to the user's email for verification
       description: This endpoint sends an OTP to the provided email address for email verification.
-      operationId: sendEmailVerification
-      tags:
-        - Email Verification
       requestBody:
         required: true
         content:
@@ -200,44 +223,17 @@ paths:
       responses:
         '200':
           description: OTP sent successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: 'OTP sent to your email'
         '400':
           description: Missing email or invalid input
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: 'Email is required'
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: 'Failed to send OTP'
 
   /api/otp/verify:
     post:
-      tags: 
-        - auth
+      tags:
+        - otp
       summary: Verify the OTP entered by the user
       description: This endpoint verifies the OTP entered by the user for email verification.
-      operationId: verifyEmailOtp
-      tags:
-        - Email Verification
       requestBody:
         required: true
         content:
@@ -258,38 +254,15 @@ paths:
       responses:
         '200':
           description: Email verified successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: 'Email verified successfully'
         '400':
           description: Invalid OTP or OTP expired
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: 'OTP has expired'
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: 'Failed to verify OTP'
+
   # User routes
   /api/user/update:
     put:
-      tags: 
+      tags:
         - user
       summary: Update user details
       security:
@@ -307,10 +280,14 @@ paths:
       responses:
         '200':
           description: User updated successfully
+        '400':
+          description: Bad request, missing or invalid data
+        '500':
+          description: Internal server error
 
   /api/user/delete:
     delete:
-      tags: 
+      tags:
         - user
       summary: Delete user account
       security:
@@ -318,9 +295,14 @@ paths:
       responses:
         '200':
           description: User deleted successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
   /api/user/{email}:
     get:
-      tags: 
+      tags:
         - user
       summary: Get user details
       description: Fetches the user details from the LMS-AUTH, LMS-USER-DATA, and LMS-USER-DOCS tables based on the provided email.
@@ -354,34 +336,10 @@ paths:
                     example: { "email": "test@example.com" }
         '400':
           description: Invalid email format or missing email.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Invalid email format"
         '404':
           description: User not found in any of the tables.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "No data found for the given email"
         '500':
           description: Internal server error or error fetching user data.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Error fetching user details"
 
 components:
   securitySchemes:

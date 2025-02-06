@@ -27,7 +27,15 @@ class EmailService {
       <p>Your OTP for email verification is: <strong>${linkOrOtp}</strong></p>
       <p>If you did not request this, please ignore this email.</p>
     `;
-    } else {
+    } else if (type === "emailLogin") {
+      subject = "Email Login OTP";
+      htmlContent = `
+      <h3>Email Login</h3>
+      <p>Your OTP Login to ${process.env.APP_NAME}: <strong>${linkOrOtp}</strong></p>
+      <p>If you did not request this, please ignore this email.</p>
+    `;
+    }
+     else {
       throw new Error("Invalid email type");
     }
 

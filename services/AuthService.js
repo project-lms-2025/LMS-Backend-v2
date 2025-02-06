@@ -1,11 +1,13 @@
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import UserModel from '../models/UserModel.js';
-import { uploadFile } from '../config/s3.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import UserModel from "../models/UserModel.js";
+import UserSession from "../models/UserSession.js";
+import { uploadFile } from "../config/s3.js";
+import EmailService from "./EmailService.js";
+import OtpService from "./OtpService.js";
 
 class AuthService {
   static async registerUserService(userData, files) {
-    console.log(userData);
     const {
       name,
       email,
@@ -69,7 +71,7 @@ class AuthService {
     return user;
   }
 
-  static async loginUserService(email, password) {
+  static async loginUserService(email, deviceType, password) {
     const response = await UserModel.getUserByEmail(email);
     if (!response.success) throw new Error(response.message || response.error);
 
@@ -78,10 +80,86 @@ class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error("Invalid credentials");
 
-    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
-    return token;
+    return await this.createSessionService(email, deviceType);
+  }
+  static async generateEmailOtpService(email) {
+    try {
+      const user = await UserModel.getUserByEmail(email);
+      if (!user) {
+        return { status: 404, message: "User not found" };
+      }
+
+      const otp = OtpService.generateOtp();
+      const otpExpiry = Date.now() + 5 * 60 * 1000;
+
+      OtpService.saveOtp(email, otp, otpExpiry);
+
+      await EmailService.sendEmailService(email, "emailLogin", otp);
+
+      return { status: 200, message: "OTP sent to your email" };
+    } catch (error) {
+      console.error("Error generating OTP for email:", error);
+      return {
+        status: 500,
+        message: "Something went wrong while generating OTP",
+      };
+    }
+  }
+
+  static async loginWitEmailService(email, deviceType, otp) {
+    try {
+      const storedOtp = await OtpService.getOtp(email);
+      if (!storedOtp) {
+        return { status: 400, message: "OTP not found or expired" };
+      }
+
+      if (storedOtp.otpExpiry < Date.now()) {
+        await OtpService.deleteOtp(email);
+        return { status: 400, message: "OTP has expired" };
+      }
+
+      if (storedOtp.storedOtp !== otp) {
+        return { status: 400, message: "Invalid OTP" };
+      }
+
+      await OtpService.deleteOtp(email);
+
+      const sessionResult = await this.createSessionService(email, deviceType);
+
+      if (sessionResult.status === 200) {
+        return {
+          status: 200,
+          message: "Login successful",
+          authToken: sessionResult.authToken,
+        };
+      }
+
+      return { status: sessionResult.status, message: sessionResult.message };
+    } catch (error) {
+      console.error("Error during OTP validation:", error);
+      return { status: 500, message: "Something went wrong" };
+    }
+  }
+
+  static async createSessionService(email, deviceType) {
+    try {
+      const token = jwt.sign({ email, deviceType }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      });
+
+      await UserSession.createOrUpdateSession(email, deviceType, token);
+      return {
+        status: 200,
+        message: "Session created successfully",
+        authToken: token,
+      };
+    } catch (error) {
+      console.error("Error during session creation:", error);
+      return {
+        status: 500,
+        message: "Something went wrong while creating session",
+      };
+    }
   }
 
   static async resetPasswordService(resetToken, newPassword) {
@@ -109,11 +187,9 @@ class AuthService {
 
     const user = response.data;
 
-    const resetToken = jwt.sign(
-      { email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "10m" }
-    );
+    const resetToken = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
     return resetToken;
   }
 }
