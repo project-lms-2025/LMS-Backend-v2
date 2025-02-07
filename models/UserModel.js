@@ -4,6 +4,7 @@ import {
   GetItemCommand,
   UpdateItemCommand,
   DeleteItemCommand,
+  QueryCommand,
 } from "@aws-sdk/client-dynamodb";
 import dotenv from "dotenv";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
@@ -19,6 +20,7 @@ class UserModel {
         password: user.password,
         is_email_verified: user.is_email_verified,
         exam_registered_for: user.exam_registered_for,
+        phoneNumber: user.phoneNumber,
       }),
     };
 
@@ -27,7 +29,6 @@ class UserModel {
       Item: marshall({
         email: user.email,
         gender: user.gender,
-        phoneNumber: user.phoneNumber,
         dob: user.dob,
         is_email_verified: user.is_email_verified,
         name: user.name,
@@ -88,6 +89,31 @@ class UserModel {
         success: true,
         data: user,
       };
+    } catch (err) {
+      console.error("Error fetching user from DynamoDB:", err);
+      return { success: false, error: "Error fetching user" };
+    }
+  }
+
+  static async getUserPhoneNumber(phoneNumber){
+    const params = {
+      TableName: process.env.AUTH_TABLE,
+      IndexName: 'phoneNumber-index',
+      KeyConditionExpression: 'phoneNumber = :phoneNumber',
+      ExpressionAttributeValues: {
+        ':phoneNumber': { S: phoneNumber }
+      }
+    };
+
+    try {
+      const authCommand = new QueryCommand(params);
+      const { Items: queryItems } = await ddbClient.send(authCommand);
+      if (!queryItems[0]) {
+        return { success: false, message: "User not found" };
+      }
+      const user = unmarshall(queryItems[0]);
+
+      return { success: true, ...user };
     } catch (err) {
       console.error("Error fetching user from DynamoDB:", err);
       return { success: false, error: "Error fetching user" };

@@ -3,31 +3,47 @@ import UserService from "../services/UserService.js";
 class UserController {
   static async updateUser(req, res) {
     try {
-      const updatedUser = await UserService.updateUserService(req.user.id, req.body);
-      res.status(200).json({ success: true, data: updatedUser });
+      const response = await UserService.updateUserService(req.user.id, req.body);
+  
+      if (response.success) {
+        return res.status(response.statusCode).json({ success: true, statusCode: response.statusCode, message: response.message, data: response.data });
+      } else {
+        return res.status(response.statusCode).json({ success: false, statusCode: response.statusCode, message: response.message });
+      }
     } catch (err) {
-      res.status(400).json({ success: false, message: err.message });
+      res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
     }
   }
-
+  
   static async deleteUser(req, res) {
     try {
-      await UserService.deleteUserService(req.user.email);
-      res.clearCookie("token");
-      res.status(200).json({ success: true, message: "User deleted successfully" });
+      const response = await UserService.deleteUserService(req.user.email);
+  
+      if (response.success) {
+        res.clearCookie("token");
+        return res.status(response.statusCode).json({ success: true, statusCode: response.statusCode, message: response.message });
+      } else {
+        return res.status(response.statusCode).json({ success: false, statusCode: response.statusCode, message: response.message });
+      }
     } catch (err) {
-      res.status(400).json({ success: false, message: err.message });
+      res.status(500).json({ success: false, statusCode: 500, message: "Internal server error" });
     }
-  }
+  }  
 
   static async getUserDetails(req, res) {
     try {
-      const userDetails = await UserService.getUserDataByEmail(req.email);
-      return res.status(200).json(userDetails);
+      const response = await UserService.getUserDataByEmail(req.email);
+  
+      if (response.success) {
+        return res.status(response.statusCode).json({ success: true, statusCode: response.statusCode, message: response.message, data: response.data });
+      } else {
+        return res.status(response.statusCode).json({ success: false, statusCode: response.statusCode, message: response.message });
+      }
     } catch (error) {
-      return res.status(500).json({ success: false, message: "Error fetching user details" });
+      return res.status(500).json({ success: false, statusCode: 500, message: "Error fetching user details" });
     }
   }
+  
 }
 
 export default UserController;
