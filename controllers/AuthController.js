@@ -18,6 +18,25 @@ class authController {
       return res.status(500).json({ success: false, message: err.message || "An error occurred while registering the user" });
     }
   }
+
+  static async createUserWithRole(req, res){
+    const role = req.body.role;
+    try { 
+      const validRoles = ['sub-admin', 'owner', 'teacher'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ success: false, message: 'Invalid role' });
+      }
+      const response = await AuthService.registerUserWithRole(req.body);
+  
+      if (response.success) {
+        return res.status(response.statusCode).json({ success: true, message: response.message, data: response.data });
+      } else {
+        return res.status(response.statusCode).json({ success: false, message: response.message });
+      }
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message || "An error occurred while registering the user" });
+    }
+  }
   
   static async login(req, res) {
     try {

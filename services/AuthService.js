@@ -73,6 +73,21 @@ class AuthService {
     }
   }
 
+  static async registerUserWithRole(user){
+    try{
+      const {email, password, phoneNumber, role} = user;
+      const existingUser = await UserModel.getUserByEmail(email);
+      if(existingUser.success){
+        return {success: false, statusCode:400, message: "User already registered."}
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await UserModel.createUserWithRole({email, password: hashedPassword, phoneNumber, role});
+      return { success: true, statusCode: 201, message: "User registered successfully" };
+    } catch (error) {
+      return { success: false, statusCode: 500, message: error.message || "An error occurred while registering the user" };
+    }
+  }
+
   static async loginUserService(email, deviceType, password) {
     try {
       const response = await UserModel.getUserByEmail(email);
