@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/ErrorMiddleware.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import AuthMiddleware from './middleware/AuthMiddleware.js';
+import batchRoutes from "./routes/BatchRoutes.js"
 
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/auth', authRoutes);
 app.use('/api/user', AuthMiddleware.auth, userRoutes);
 app.use('/api/otp/', otpRoutes)
+app.use('/api/batch/', batchRoutes)
 
 app.use(errorHandler);
 

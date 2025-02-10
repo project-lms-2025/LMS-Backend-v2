@@ -16,76 +16,16 @@ class UserModel {
     const authParams = {
       TableName: process.env.AUTH_TABLE,
       Item: marshall({
-        email: user.email,
-        password: user.password,
-        is_email_verified: user.is_email_verified,
-        phoneNumber: user.phoneNumber,
-      }),
-    };
-
-    const userDataParams = {
-      TableName: process.env.USER_DATA_TABLE,
-      Item: marshall({
-        email: user.email,
-        gender: user.gender,
-        dob: user.dob,
-        exam_registered_for: user.exam_registered_for,
-        is_email_verified: user.is_email_verified,
         name: user.name,
-        address: user.address,
-        pincode: user.pincode,
-        state: user.state,
-        marks10: user.marks10 || null,
-        marks12: user.marks12 || null,
-        higher_degree_score: user.higher_degree_score || null,
-        previous_year_score: user.previous_year_score || null,
-      }),
-    };
-
-    const userDocsParams = {
-      TableName: process.env.USER_DOCS_TABLE,
-      Item: marshall({
         email: user.email,
-        profile_picture_url: user.profile_picture || null,
-        pdf10th: user.pdf10th || null,
-        pdf12th: user.pdf12th || null,
-        higher_degree_urls: user.higher_degree_urls?.length
-          ? user.higher_degree_urls
-          : null,
-        previous_year_scorecard_url: user.previous_year_scorecard_url || null,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        exam_registered_for:user.exam_registered_for || null
       }),
     };
 
     try {
       const authCommand = new PutItemCommand(authParams);
-      const userDataCommand = new PutItemCommand(userDataParams);
-      const userDocsCommand = new PutItemCommand(userDocsParams);
-      await ddbClient.send(authCommand);
-      await ddbClient.send(userDataCommand);
-      await ddbClient.send(userDocsCommand);
-      return { success: true, message: "User created successfully" };
-    } catch (err) {
-      console.error("Error creating user in DynamoDB:", err);
-      return { success: false, message: "Error creating user" };
-    }
-  }
-
-  static async createUserWithRole(user){
-    console.log(user)
-    const params = {
-      TableName: process.env.AUTH_TABLE,
-      Item: marshall({
-        email: user.email,
-        password: user.password,
-        is_email_verified: user.is_email_verified || false,
-        role: user.role,
-        phoneNumber: user.phoneNumber,
-      }),
-    };
-
-
-    try {
-      const authCommand = new PutItemCommand(params);
       await ddbClient.send(authCommand);
       return { success: true, message: "User created successfully" };
     } catch (err) {
@@ -93,6 +33,7 @@ class UserModel {
       return { success: false, message: "Error creating user" };
     }
   }
+
   static async getUserByEmail(email) {
     const authParams = {
       TableName: process.env.AUTH_TABLE,

@@ -1,0 +1,108 @@
+import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+
+const dynamoDbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+const TableName = process.env.DYNAMODB_CLASS_TABLE;
+
+class ClassData {
+    static async createClass(cls) { // Renamed from just "class" to "cls" to avoid keyword conflict
+        const params = {
+            TableName,
+            Item: marshall(cls),
+        };
+
+        try {
+            const command = new PutItemCommand(params);
+            const data = await dynamoDbClient.send(command);
+            return cls;
+        } catch (error) {
+            console.error("Error creating class:", error);
+            throw error;
+        }
+    }
+
+    static async getClassById(class_id) {
+        const params = {
+            TableName,
+            Key: marshall({ class_id }),
+        };
+
+        try {
+            const command = new GetItemCommand(params);
+            const data = await dynamoDbClient.send(command);
+            return data.Item ? unmarshall(data.Item) : null;
+        } catch (error) {
+            console.error("Error getting class:", error);
+            throw error;
+        }
+    }
+
+    static async getClassesByCourseId(course_id) {
+        const params = {
+            TableName,
+            IndexName: 'course_id-index', // Assuming you have a GSI on course_id
+            KeyConditionExpression: "course_id = :course_id",
+            ExpressionAttributeValues: marshall({ ":course_id": course_id }),
+        };
+
+        try {
+            const command = new QueryCommand(params);
+            const data = await dynamoDbClient.send(command);
+            return data.Items.map(item => unmarshall(item));
+        } catch (error) {
+            console.error("Error getting classes by course ID:", error);
+            throw error;
+        }
+    }
+
+    static async updateClass(class_id, updatedClassData) {
+        const existingClass = await this.getClassById(class_id);
+        if (!existingClass) {
+            throw new Error('Class not found');
+        }
+
+        const updateParams = {
+            TableName,
+            Key: marshall({ class_id }),
+            UpdateExpression: "SET ",
+            ExpressionAttributeValues: marshall({}),
+            ReturnValues: "ALL_NEW"
+        };
+
+        for (const key in updatedClassData) {
+            if (updatedClassData.hasOwnProperty(key)) {
+                updateParams.UpdateExpression += `${key} = :${key}, `;
+                updateParams.ExpressionAttributeValues[`:${key}`] = updatedClassData[key];
+            }
+        }
+
+        updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -2);
+
+        try {
+            const command = new UpdateItemCommand(updateParams);
+            const data = await dynamoDbClient.send(command);
+            return unmarshall(data.Attributes);
+        } catch (error) {
+            console.error("Error updating class:", error);
+            throw error;
+        }
+    }
+
+    static async deleteClass(class_id) {
+        const params = {
+            TableName,
+            Key: marshall({ class_id }),
+        };
+
+        try {
+            const command = new DeleteItemCommand(params);
+            const data = await dynamoDbClient.send(command);
+            return data;
+        } catch (error) {
+            console.error("Error deleting class:", error);
+            throw error;
+        }
+    }
+}
+
+export default classData;

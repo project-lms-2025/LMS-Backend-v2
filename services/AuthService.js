@@ -7,23 +7,12 @@ import EmailService from "./EmailService.js";
 import OtpService from "./OtpService.js";
 
 class AuthService {
-  static async registerUserService(userData, files) {
+  static async registerUserService(userData) {
     const {
       name,
       email,
-      password,
-      gender,
       phoneNumber,
-      dob,
-      is_email_verified,
-      address,
-      pincode,
-      state,
-      marks10,
-      marks12,
-      examRegisteredFor,
-      higherDegreeScore,
-      previousYearScore,
+      exam_registered_for
     } = userData;
   
     try {
@@ -32,39 +21,12 @@ class AuthService {
         return { success: false, statusCode: 400, message: "User already exists" };
       }
   
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      const profilePic = await uploadFile(files.profilePicture[0]);
-      const degree10 = files.pdf10th ? await uploadFile(files.pdf10th[0]) : null;
-      const degree12 = files.pdf12th ? await uploadFile(files.pdf12th[0]) : null;
-      const higherDegrees = files.pdfHigherDegrees
-        ? await Promise.all(files.pdfHigherDegrees.map((file) => uploadFile(file)))
-        : [];
-      const previousYearScorecard = files.pdfPreviousYear
-        ? await uploadFile(files.pdfPreviousYear[0])
-        : null;
-  
       await UserModel.createUser({
         name,
         email,
-        password: hashedPassword,
-        gender,
         phoneNumber,
-        dob,
-        is_email_verified,
-        profile_picture: profilePic.Location,
-        pdf10th: degree10 ? degree10.Location : null,
-        pdf12th: degree12 ? degree12.Location : null,
-        exam_registered_for: examRegisteredFor,
-        higher_degree_urls: higherDegrees.map((file) => file.Location),
-        previous_year_scorecard_url: previousYearScorecard ? previousYearScorecard.Location : null,
-        address,
-        pincode,
-        state,
-        marks10,
-        marks12,
-        higher_degree_score: higherDegreeScore,
-        previous_year_score: previousYearScore,
+        role:"student",
+        exam_registered_for
       });
   
       return { success: true, statusCode: 201, message: "User registered successfully" };
@@ -75,13 +37,11 @@ class AuthService {
 
   static async registerUserWithRole(user){
     try{
-      const {email, password, phoneNumber, role} = user;
-      const existingUser = await UserModel.getUserByEmail(email);
+      const existingUser = await UserModel.getUserByEmail(user.email);
       if(existingUser.success){
         return {success: false, statusCode:400, message: "User already registered."}
       }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await UserModel.createUserWithRole({email, password: hashedPassword, phoneNumber, role});
+      await UserModel.createUser(user);
       return { success: true, statusCode: 201, message: "User registered successfully" };
     } catch (error) {
       return { success: false, statusCode: 500, message: error.message || "An error occurred while registering the user" };
