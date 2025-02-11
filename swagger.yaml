@@ -1,20 +1,18 @@
 openapi: 3.0.0
 info:
-  title: Your API Title
+  title: Auth API
   version: 1.0.0
-  description: API description
+  description: API for user authentication and management
 
 tags:
-  - name: Authentication
-    description: Endpoints related to user authentication
-  - name: User Management
-    description: Endpoints for managing users
+  - name: auth
+    description: Authentication related operations
 
 paths:
   /api/auth/register:
     post:
       tags:
-        - Authentication
+        - auth
       summary: Register a new user
       requestBody:
         content:
@@ -34,57 +32,24 @@ paths:
                   description: User's phone number
                 exam_registered_for:
                   type: string
-                  description: Exam the user registered for
+                  description: exam for which user registered
               required:
                 - name
                 - email
                 - phoneNumber
-                - exam_registered_for
       responses:
         '201':
           description: User registered successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: User registered successfully
         '400':
-          description: User already exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: User already exists
+          description: User already exists or invalid input
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: An error occurred while registering the user
+
   /api/auth/create-user:
     post:
       tags:
-        - User Management
-      summary: Create a new user with a specific role (sub-admin, owner, teacher)
+        - auth
+      summary: Create a user with a specific role (Admin/Sub-admin/Owner)
       requestBody:
         content:
           application/json:
@@ -101,15 +66,9 @@ paths:
                 phoneNumber:
                   type: string
                   description: User's phone number
-                exam_registered_for:
-                  type: string
-                  description: Exam the user registered for (optional)
                 role:
                   type: string
-                  enum:
-                    - sub-admin
-                    - owner
-                    - teacher
+                  enum: [admin, sub-admin, owner, teacher]
                   description: User's role
               required:
                 - name
@@ -119,50 +78,15 @@ paths:
       responses:
         '201':
           description: User created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: User created successfully
-                  data: # Example Data property, adjust as needed.
-                    type: object
-                    description: User data
         '400':
-          description: Bad request (e.g., invalid role, user already exists)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: Invalid role or User already exists
+          description: User already exists or invalid role
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: An error occurred while creating the user
+
   /api/auth/login:
     post:
       tags:
-        - Authentication
+        - auth
       summary: Login with email and OTP
       requestBody:
         content:
@@ -192,46 +116,19 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Login successful
                   authToken:
                     type: string
                     description: Authentication token
         '400':
-          description: Bad request (e.g., invalid OTP, OTP expired, OTP not found)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: Invalid OTP
+          description: Invalid email or OTP or OTP expired
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: Something went wrong while logging in
+
   /api/auth/send-login-otp:
     post:
       tags:
-        - Authentication
-      summary: Send login OTP to user's email
+        - auth
+      summary: Send OTP for login
       requestBody:
         content:
           application/json:
@@ -251,85 +148,697 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: OTP sent to your email
                   email:
                     type: string
                     format: email
-                    description: User's email address
+                    description: User's email
         '404':
           description: User not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: User not found
         '500':
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: Something went wrong while sending OTP
+
   /api/auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logout user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                deviceType:
+                  type: string
+                  description: Type of device used for logout
+              required:
+                - email
+                - deviceType
+      responses:
+        '200':
+          description: Logged out successfully
+        '500':
+          description: Internal server error
+
+  /api/otp/send:
+    post:
+      tags:
+        - auth
+      summary: Send OTP for email verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+              required:
+                - email
+      responses:
+        '200':
+          description: OTP sent successfully
+        '400':
+          description: Email is required
+        '500':
+          description: Failed to send OTP or internal server error
+
+  /api/otp/verify:
+    post:
+      tags:
+        - auth
+      summary: Verify email OTP
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                otp:
+                  type: string
+                  description: One-time password
+              required:
+                - email
+                - otp
+      responses:
+        '200':
+          description: Email verified successfully
+        '400':
+          description: Email and OTP are required or OTP has expired or invalid OTP
+        '500':
+          description: Internal server error
+
+  /api/user/update:
+    put:
+      tags:
+        - auth
+      summary: Update user details
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              # Add properties as needed for user updates.  Example:
+              properties:
+                name:
+                  type: string
+                  description: Updated user name
+                # ... other fields to update
+      responses:
+        '200':
+          description: User updated successfully
+        '500':
+          description: Internal server error
+
+  /api/user/delete:
     delete:
       tags:
-        - Authentication
-      summary: Logout a user
-      parameters: 
-        - in: query 
+        - auth
+      summary: Delete user
+      responses:
+        '200':
+          description: User deleted successfully
+        '500':
+          description: Internal server error
+
+  /api/user/{email}:
+    get:
+      tags:
+        - auth
+      summary: Get user details by email
+      parameters:
+        - in: path
           name: email
           schema:
             type: string
             format: email
           required: true
           description: User's email address
-        - in: query 
-          name: deviceType
+      responses:
+        '200':
+          description: User details retrieved successfully
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  /api/batch:
+    post:
+      tags:
+        - batch
+      summary: Create a new batch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch_name:
+                  type: string
+                  description: Name of the batch
+                description:
+                  type: string
+                  description: Description of the batch
+              required:
+                - batch_name
+                - description
+      responses:
+        '201':
+          description: Batch created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch_id:
+                    type: string
+                    description: Unique ID of the batch
+                  teacher_email:
+                    type: string
+                    format: email
+                    description: Email of the teacher creating the batch
+                  batch_name:
+                    type: string
+                    description: Name of the batch
+                  description:
+                    type: string
+                    description: Description of the batch
+        '500':
+          description: Failed to create batch
+
+    get:
+      tags:
+        - batch
+      summary: Get all batches
+      responses:
+        '200':
+          description: List of batches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    batch_id:
+                      type: string
+                      description: Unique ID of the batch
+                    teacher_email:
+                      type: string
+                      format: email
+                      description: Email of the teacher creating the batch
+                    batch_name:
+                      type: string
+                      description: Name of the batch
+                    description:
+                      type: string
+                      description: Description of the batch
+        '500':
+          description: Failed to get all batches
+
+  /api/batch/{batch_id}:
+    get:
+      tags:
+        - batch
+      summary: Get a batch by ID
+      parameters:
+        - in: path
+          name: batch_id
           schema:
             type: string
           required: true
-          description: Type of device
+          description: ID of the batch
       responses:
         '200':
-          description: Logged out successfully
+          description: Batch details
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
+                  batch_id:
                     type: string
-                    example: Logged out successfully
+                    description: Unique ID of the batch
+                  teacher_email:
+                    type: string
+                    format: email
+                    description: Email of the teacher creating the batch
+                  batch_name:
+                    type: string
+                    description: Name of the batch
+                  description:
+                    type: string
+                    description: Description of the batch
+        '404':
+          description: Batch not found
         '500':
-          description: Logout failed
+          description: Failed to get batch
+
+    put:
+      tags:
+        - batch
+      summary: Update a batch
+      parameters:
+        - in: path
+          name: batch_id
+          schema:
+            type: string
+          required: true
+          description: ID of the batch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch_name:
+                  type: string
+                  description: Updated name of the batch
+                description:
+                  type: string
+                  description: Updated description of the batch
+                # Add other fields as needed for updates
+      responses:
+        '200':
+          description: Batch updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                # ... properties of the updated batch
+        '500':
+          description: Failed to update batch
+
+    delete:
+      tags:
+        - batch
+      summary: Delete a batch
+      parameters:
+        - in: path
+          name: batch_id
+          schema:
+            type: string
+          required: true
+          description: ID of the batch
+      responses:
+        '204':
+          description: Batch deleted successfully
+        '500':
+          description: Failed to delete batch
+  /api/course:
+    post:
+      tags:
+        - course
+      summary: Create a new course
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch_id:
+                  type: string
+                  description: ID of the batch
+                course_name:
+                  type: string
+                  description: Name of the course
+                allow_notes_download:
+                  type: boolean
+                  description: Whether notes download is allowed
+              required:
+                - batch_id
+                - course_name
+                - allow_notes_download
+      responses:
+        '201':
+          description: Course created successfully
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  error:
+                  course_id:
                     type: string
-                    example: Logout failed
+                    description: Unique ID of the course
+                  teacher_id:
+                    type: string
+                    description: ID of the teacher
+                  batch_id:
+                    type: string
+                    description: ID of the batch
+                  course_name:
+                    type: string
+                    description: Name of the course
+                  allow_notes_download:
+                    type: boolean
+                    description: Whether notes download is allowed
+        '500':
+          description: Failed to create course
+
+  /api/course/{course_id}:
+    get:
+      tags:
+        - course
+      summary: Get a course by ID
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: string
+          required: true
+          description: ID of the course
+      responses:
+        '200':
+          description: Course details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  course_id:
+                    type: string
+                    description: Unique ID of the course
+                  teacher_id:
+                    type: string
+                    description: ID of the teacher
+                  batch_id:
+                    type: string
+                    description: ID of the batch
+                  course_name:
+                    type: string
+                    description: Name of the course
+                  allow_notes_download:
+                    type: boolean
+                    description: Whether notes download is allowed
+        '404':
+          description: Course not found
+        '500':
+          description: Failed to get course
+
+    put:
+      tags:
+        - course
+      summary: Update a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: string
+          required: true
+          description: ID of the course
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch_id:
+                  type: string
+                  description: ID of the batch
+                course_name:
+                  type: string
+                  description: Name of the course
+                allow_notes_download:
+                  type: boolean
+                  description: Whether notes download is allowed
+      responses:
+        '200':
+          description: Course updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                # ... properties of the updated course
+        '500':
+          description: Failed to update course
+
+    delete:
+      tags:
+        - course
+      summary: Delete a course
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: string
+          required: true
+          description: ID of the course
+      responses:
+        '204':
+          description: Course deleted successfully
+        '500':
+          description: Failed to delete course
+
+  /api/course/batch/{batch_id}:
+    get:
+      tags:
+        - course
+      summary: Get courses by batch ID
+      parameters:
+        - in: path
+          name: batch_id
+          schema:
+            type: string
+          required: true
+          description: ID of the batch
+      responses:
+        '200':
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    course_id:
+                      type: string
+                      description: Unique ID of the course
+                    teacher_id:
+                      type: string
+                      description: ID of the teacher
+                    batch_id:
+                      type: string
+                      description: ID of the batch
+                    course_name:
+                      type: string
+                      description: Name of the course
+                    allow_notes_download:
+                      type: boolean
+                      description: Whether notes download is allowed
+        '500':
+          description: Failed to get courses
+  /api/class:
+    post:
+      tags:
+        - class
+      summary: Create a new class
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                course_id:
+                  type: string
+                  description: ID of the course
+                class_title:
+                  type: string
+                  description: Title of the class
+                class_date_time:
+                  type: string
+                  format: date-time  # Or a more specific date/time format if needed
+                  description: Date and time of the class
+                recording_url:
+                  type: string
+                  description: URL of the recording (optional)
+              required:
+                - course_id
+                - class_title
+                - class_date_time
+      responses:
+        '201':
+          description: Class created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  class_id:
+                    type: string
+                    description: Unique ID of the class
+                  teacher_id:
+                    type: string
+                    description: ID of the teacher
+                  course_id:
+                    type: string
+                    description: ID of the course
+                  class_title:
+                    type: string
+                    description: Title of the class
+                  class_date_time:
+                    type: string
+                    format: date-time
+                    description: Date and time of the class
+                  recording_url:
+                    type: string
+                    description: URL of the recording (optional)
+        '500':
+          description: Failed to create class
+
+  /api/class/{class_id}:
+    get:
+      tags:
+        - class
+      summary: Get a class by ID
+      parameters:
+        - in: path
+          name: class_id
+          schema:
+            type: string
+          required: true
+          description: ID of the class
+      responses:
+        '200':
+          description: Class details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  class_id:
+                    type: string
+                    description: Unique ID of the class
+                  teacher_id:
+                    type: string
+                    description: ID of the teacher
+                  course_id:
+                    type: string
+                    description: ID of the course
+                  class_title:
+                    type: string
+                    description: Title of the class
+                  class_date_time:
+                    type: string
+                    format: date-time
+                    description: Date and time of the class
+                  recording_url:
+                    type: string
+                    description: URL of the recording (optional)
+        '404':
+          description: Class not found
+        '500':
+          description: Failed to get class
+
+    put:
+      tags:
+        - class
+      summary: Update a class
+      parameters:
+        - in: path
+          name: class_id
+          schema:
+            type: string
+          required: true
+          description: ID of the class
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                course_id:
+                  type: string
+                  description: ID of the course
+                class_title:
+                  type: string
+                  description: Title of the class
+                class_date_time:
+                  type: string
+                  format: date-time
+                  description: Date and time of the class
+                recording_url:
+                  type: string
+                  description: URL of the recording (optional)
+              # No required fields here, as it's an update.
+              # But you can mark fields as required if they *must* be updated
+      responses:
+        '200':
+          description: Class updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                # ... properties of the updated class
+        '500':
+          description: Failed to update class
+
+    delete:
+      tags:
+        - class
+      summary: Delete a class
+      parameters:
+        - in: path
+          name: class_id
+          schema:
+            type: string
+          required: true
+          description: ID of the class
+      responses:
+        '204':
+          description: Class deleted successfully
+        '500':
+          description: Failed to delete class
+
+  /api/class/course/{course_id}:
+    get:
+      tags:
+        - class
+      summary: Get classes by course ID
+      parameters:
+        - in: path
+          name: course_id
+          schema:
+            type: string
+          required: true
+          description: ID of the course
+      responses:
+        '200':
+          description: List of classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    class_id:
+                      type: string
+                      description: Unique ID of the class
+                    teacher_id:
+                      type: string
+                      description: ID of the teacher
+                    course_id:
+                      type: string
+                      description: ID of the course
+                    class_title:
+                      type: string
+                      description: Title of the class
+                    class_date_time:
+                      type: string
+                      format: date-time
+                      description: Date and time of the class
+                    recording_url:
+                      type: string
+                      description: URL of the recording (optional)
+        '500':
+          description: Failed to get classes
