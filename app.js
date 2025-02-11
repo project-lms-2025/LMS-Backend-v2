@@ -10,6 +10,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import AuthMiddleware from './middleware/AuthMiddleware.js';
 import batchRoutes from "./routes/BatchRoutes.js"
+import courseRoutes from "./routes/CourseRoutes.js"
+import classRoutes from "./routes/ClassRoutes.js"
 
 
 const app = express();
@@ -34,6 +36,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', AuthMiddleware.auth, userRoutes);
 app.use('/api/otp/', otpRoutes)
 app.use('/api/batch/', batchRoutes)
+app.use('/api/course/', courseRoutes)
+app.use('/api/class/', classRoutes)
 
 app.use(errorHandler);
 

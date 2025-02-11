@@ -1,12 +1,12 @@
-import ClassService from '../services/classService.js';
+import ClassService from '../services/ClassService.js';
 
 class ClassController {
     static async createClass(req, res) {
         try {
             const { course_id, class_title, class_date_time, recording_url } = req.body;
-            const teacher_id = req.user.user_id;
+            const teacher_email = req.email;
 
-            const newClass = await ClassService.createClass(teacher_id, course_id, class_title, class_date_time, recording_url);
+            const newClass = await ClassService.createClass(teacher_email, course_id, class_title, class_date_time, recording_url);
             res.status(201).json(newClass);
         } catch (error) {
             console.error(error);

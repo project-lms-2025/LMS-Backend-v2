@@ -1,19 +1,18 @@
-import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import ddbClient from "../config/dynamoDB.js";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
-const dynamoDbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
-const TableName = process.env.DYNAMODB_COURSE_TABLE; 
 
-class CourseData {
+class CourseModel {
     static async createCourse(course) {
         const params = {
-            TableName,
+            TableName: process.env.COURSE_TABLE,
             Item: marshall(course),
         };
 
         try {
             const command = new PutItemCommand(params);
-            const data = await dynamoDbClient.send(command);
+            const data = await ddbClient.send(command);
             return course;
         } catch (error) {
             console.error("Error creating course:", error);
@@ -23,13 +22,13 @@ class CourseData {
 
     static async getCourseById(course_id) {
         const params = {
-            TableName,
+            TableName: process.env.COURSE_TABLE,
             Key: marshall({ course_id }),
         };
 
         try {
             const command = new GetItemCommand(params);
-            const data = await dynamoDbClient.send(command);
+            const data = await ddbClient.send(command);
             return data.Item ? unmarshall(data.Item) : null;
         } catch (error) {
             console.error("Error getting course:", error);
@@ -39,7 +38,7 @@ class CourseData {
 
     static async getCoursesByBatchId(batch_id) { // New function to get courses within a batch
         const params = {
-            TableName,
+            TableName: process.env.COURSE_TABLE,
             IndexName: 'batch_id-index',  // Assuming you have a GSI on batch_id
             KeyConditionExpression: "batch_id = :batch_id",
             ExpressionAttributeValues: marshall({ ":batch_id": batch_id }),
@@ -47,7 +46,7 @@ class CourseData {
 
         try {
             const command = new QueryCommand(params);
-            const data = await dynamoDbClient.send(command);
+            const data = await ddbClient.send(command);
             return data.Items.map(item => unmarshall(item));
         } catch (error) {
             console.error("Error getting courses by batch ID:", error);
@@ -63,7 +62,7 @@ class CourseData {
         }
 
         const updateParams = {
-            TableName,
+            TableName: process.env.COURSE_TABLE,
             Key: marshall({ course_id }),
             UpdateExpression: "SET ",
             ExpressionAttributeValues: marshall({}),
@@ -81,7 +80,7 @@ class CourseData {
 
         try {
             const command = new UpdateItemCommand(updateParams);
-            const data = await dynamoDbClient.send(command);
+            const data = await ddbClient.send(command);
             return unmarshall(data.Attributes);
         } catch (error) {
             console.error("Error updating course:", error);
@@ -91,13 +90,13 @@ class CourseData {
 
     static async deleteCourse(course_id) {
         const params = {
-            TableName,
+            TableName: process.env.COURSE_TABLE,
             Key: marshall({ course_id }),
         };
 
         try {
             const command = new DeleteItemCommand(params);
-            const data = await dynamoDbClient.send(command);
+            const data = await ddbClient.send(command);
             return data;
         } catch (error) {
             console.error("Error deleting course:", error);
@@ -106,4 +105,4 @@ class CourseData {
     }
 }
 
-export default CourseData;
+export default CourseModel;

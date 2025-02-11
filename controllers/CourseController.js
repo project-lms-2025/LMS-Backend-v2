@@ -1,12 +1,12 @@
-import CourseService from '../services/courseService.js';
+import CourseService from '../services/CourseService.js';
 
 class CourseController {
     static async createCourse(req, res) {
         try {
             const { batch_id, course_name, allow_notes_download } = req.body;
-            const teacher_id = req.user.user_id;
+            const teacher_email = req.email;
 
-            const newCourse = await CourseService.createCourse(teacher_id, batch_id, course_name, allow_notes_download);
+            const newCourse = await CourseService.createCourse(teacher_email, batch_id, course_name, allow_notes_download);
             res.status(201).json(newCourse);
         } catch (error) {
             console.error(error);
