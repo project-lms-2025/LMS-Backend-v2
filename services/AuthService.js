@@ -2,7 +2,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/UserModel.js";
 import UserSession from "../models/UserSession.js";
-import { uploadFile } from "../config/s3.js";
 import EmailService from "./EmailService.js";
 import OtpService from "./OtpService.js";
 

@@ -1,5 +1,5 @@
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const dotenv = require('dotenv');
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -29,4 +29,4 @@ const uploadFile = async (file) => {
   }
 };
 
-module.exports = { uploadFile };
+export default uploadFile;

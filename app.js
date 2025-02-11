@@ -5,7 +5,7 @@ import YAML from 'yamljs';
 import authRoutes from './routes/AuthRoutes.js';
 import userRoutes from './routes/UserRoutes.js';
 import otpRoutes from './routes/OtpRoutes.js'
-import { errorHandler } from './middleware/ErrorMiddleware.js';
+import errorHandler from './middleware/ErrorMiddleware.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import AuthMiddleware from './middleware/AuthMiddleware.js';

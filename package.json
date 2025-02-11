@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Node.js server with AWS RDS, S3, JWT authentication, and Swagger UI",
   "main": "app.js",
+  "type": "module",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js"
