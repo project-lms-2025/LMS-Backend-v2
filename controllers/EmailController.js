@@ -42,7 +42,7 @@ class EmailController {
         return res.status(storedOtpResponse.statusCode).json({ success: false, statusCode: storedOtpResponse.statusCode, message: storedOtpResponse.message });
       }
   
-      const { storedOtp, otpExpiry } = storedOtpResponse.data;
+      const { storedOtp, otpExpiry } = storedOtpResponse.otp;
   
       if (Date.now() > otpExpiry) {
         return res.status(400).json({ success: false, statusCode: 400, message: "OTP has expired" });
