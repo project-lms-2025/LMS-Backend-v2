@@ -7,6 +7,12 @@ info:
 tags:
   - name: auth
     description: Authentication related operations
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
 paths:
   /api/auth/register:
@@ -49,6 +55,8 @@ paths:
     post:
       tags:
         - auth
+      security: 
+        - BearerAuth: []
       summary: Create a user with a specific role (Admin/Sub-admin/Owner)
       requestBody:
         content:
@@ -259,6 +267,8 @@ paths:
           description: User updated successfully
         '500':
           description: Internal server error
+      security: 
+        - BearerAuth: []
 
   /api/user/delete:
     delete:
@@ -270,6 +280,8 @@ paths:
           description: User deleted successfully
         '500':
           description: Internal server error
+      security: 
+        - BearerAuth: []
 
   /api/user/{email}:
     get:
@@ -291,6 +303,8 @@ paths:
           description: User not found
         '500':
           description: Internal server error
+      security: 
+        - BearerAuth: []
   /api/batch:
     post:
       tags:
@@ -334,6 +348,8 @@ paths:
                     description: Description of the batch
         '500':
           description: Failed to create batch
+      security: 
+        - BearerAuth: []
 
     get:
       tags:
@@ -437,6 +453,8 @@ paths:
                 # ... properties of the updated batch
         '500':
           description: Failed to update batch
+      security: 
+        - BearerAuth: []
 
     delete:
       tags:
@@ -454,6 +472,8 @@ paths:
           description: Batch deleted successfully
         '500':
           description: Failed to delete batch
+      security: 
+        - BearerAuth: []
   /api/course:
     post:
       tags:
@@ -503,6 +523,8 @@ paths:
                     description: Whether notes download is allowed
         '500':
           description: Failed to create course
+      security: 
+        - BearerAuth: []
 
   /api/course/{course_id}:
     get:
@@ -580,6 +602,8 @@ paths:
                 # ... properties of the updated course
         '500':
           description: Failed to update course
+      security: 
+        - BearerAuth: []
 
     delete:
       tags:
@@ -597,6 +621,8 @@ paths:
           description: Course deleted successfully
         '500':
           description: Failed to delete course
+      security: 
+        - BearerAuth: []
 
   /api/course/batch/{batch_id}:
     get:
@@ -694,6 +720,8 @@ paths:
                     description: URL of the recording (optional)
         '500':
           description: Failed to create class
+      security: 
+        - BearerAuth: []
 
   /api/class/{class_id}:
     get:
@@ -781,6 +809,8 @@ paths:
                 # ... properties of the updated class
         '500':
           description: Failed to update class
+      security: 
+        - BearerAuth: []
 
     delete:
       tags:
@@ -798,6 +828,8 @@ paths:
           description: Class deleted successfully
         '500':
           description: Failed to delete class
+      security: 
+        - BearerAuth: []
 
   /api/class/course/{course_id}:
     get:
