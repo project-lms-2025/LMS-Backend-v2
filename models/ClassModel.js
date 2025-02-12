@@ -71,7 +71,7 @@ class ClassModel {
         for (const key in updatedClassData) {
             if (updatedClassData.hasOwnProperty(key)) {
                 updateParams.UpdateExpression += `${key} = :${key}, `;
-                updateParams.ExpressionAttributeValues[`:${key}`] = updatedClassData[key];
+                updateParams.ExpressionAttributeValues[`:${key}`] = marshall({ [key]: updatedClassData[key] })[key];
             }
         }
 

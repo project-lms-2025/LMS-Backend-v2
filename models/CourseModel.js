@@ -61,6 +61,7 @@ class CourseModel {
             throw new Error('Course not found');
         }
 
+
         const updateParams = {
             TableName: process.env.COURSE_TABLE,
             Key: marshall({ course_id }),
@@ -69,14 +70,17 @@ class CourseModel {
             ReturnValues: "ALL_NEW"
         };
 
+
         for (const key in updatedCourseData) {
             if (updatedCourseData.hasOwnProperty(key)) {
                 updateParams.UpdateExpression += `${key} = :${key}, `;
-                updateParams.ExpressionAttributeValues[`:${key}`] = updatedCourseData[key];
+                updateParams.ExpressionAttributeValues[`:${key}`] = marshall({ [key]: updatedCourseData[key] })[key];
             }
         }
 
         updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -2);
+
+        console.log(updateParams)
 
         try {
             const command = new UpdateItemCommand(updateParams);

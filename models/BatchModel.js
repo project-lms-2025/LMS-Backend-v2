@@ -57,7 +57,7 @@ class BatchModel {
   }
 
   static async updateBatch(batch_id, updatedBatchData) {
-    const existingBatch = await getBatchById(batch_id);
+    const existingBatch = await this.getBatchById(batch_id);
     if (!existingBatch) {
       throw new Error("Batch not found");
     }
@@ -73,8 +73,7 @@ class BatchModel {
     for (const key in updatedBatchData) {
       if (updatedBatchData.hasOwnProperty(key)) {
         updateParams.UpdateExpression += `${key} = :${key}, `;
-        updateParams.ExpressionAttributeValues[`:${key}`] =
-          updatedBatchData[key];
+        updateParams.ExpressionAttributeValues[`:${key}`] = marshall({ [key]: updatedBatchData[key] })[key];
       }
     }
 
