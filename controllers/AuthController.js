@@ -63,7 +63,7 @@ class authController {
   }
   
   static async logout(req, res) {
-    const { email, deviceType } = req;
+    const { email, deviceType } = req.body;
     try {
       await UserSession.deleteSession(email, deviceType);
       res.status(200).json({ success: true, message: "Logged out successfully" });
