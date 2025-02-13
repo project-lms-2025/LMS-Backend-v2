@@ -1,5 +1,6 @@
 import EmailService from "../services/EmailService.js";
 import OtpService from "../services/OtpService.js";
+import UserModel from "../models/UserModel.js"
 
 class EmailController {
   static async sendEmailOtp(req, res) {
@@ -10,6 +11,10 @@ class EmailController {
     }
   
     try {
+      const user = await UserModel.getUserByEmail(email);
+      
+      if(user.success)return res.status(400).json({success: false, message:"User already exists"});
+
       const otp = OtpService.generateOtp();
       const otpExpiry = Date.now() + 15 * 60 * 1000;
   

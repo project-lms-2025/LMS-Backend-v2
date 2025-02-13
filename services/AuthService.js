@@ -92,6 +92,7 @@ class AuthService {
   static async loginWitEmailService(email, deviceType, otp) {
     try {
       const response = OtpService.getOtp(email);
+      const user = await UserModel.getUserByEmail(email);
       if (!response.success) {
         return { success: false, statusCode: 400, message: "OTP not found or expired" };
       }
@@ -109,7 +110,7 @@ class AuthService {
       const sessionResult = await this.createSessionService(email, deviceType);
   
       if (sessionResult.statusCode === 200) {
-        return { success: true, statusCode: 200, message: "Login successful", authToken: sessionResult.token };
+        return { success: true, statusCode: 200, message: "Login successful", authToken: sessionResult.token, role: user.data.role };
       }
   
       return { success: false, statusCode: sessionResult.status, message: sessionResult.message };

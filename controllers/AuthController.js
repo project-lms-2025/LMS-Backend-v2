@@ -54,7 +54,8 @@ class authController {
     try {
       const result = await AuthService.loginWitEmailService(email, deviceType, otp);
       // if(result.success)res.cookie("token", result.authToken, { httpOnly: true });
-      return res.status(result.statusCode).json({ success: result.success, message: result.message, authToken: result.authToken });
+      console.log(result)
+      return res.status(result.statusCode).json({ success: result.success, message: result.message, authToken: result.authToken, role: result.role });
     } catch (error) {
       console.error('Error during login with OTP:', error);
       return res.status(500).json({ success: false, message: 'Something went wrong while logging in' });
