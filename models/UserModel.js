@@ -191,15 +191,7 @@ class UserModel {
       const authData = await this.getDataFromTable(process.env.AUTH_TABLE, {
         email,
       });
-      const userData = await this.getDataFromTable(
-        process.env.USER_DATA_TABLE,
-        { email }
-      );
-      const userDocs = await this.getDataFromTable(
-        process.env.USER_DOCS_TABLE,
-        { email }
-      );
-      return { authData, userData, userDocs };
+      return { authData };
     } catch (error) {
       console.error("Error fetching user details:", error);
       throw new Error("Error fetching user details");

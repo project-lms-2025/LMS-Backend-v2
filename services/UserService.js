@@ -33,10 +33,8 @@ class UserService {
       }
   
       const authData = user.authData;
-      const userData = user.userData;
-      const userDocs = user.userDocs;
   
-      return { success: true, statusCode: 200, message: "User data retrieved successfully", email, authData, userData, userDocs };
+      return { success: true, statusCode: 200, message: "User data retrieved successfully", data: {email, ...authData} };
     } catch (error) {
       console.error("Error fetching user data in service:", error);
       return { success: false, statusCode: 500, message: "Error fetching user data" };

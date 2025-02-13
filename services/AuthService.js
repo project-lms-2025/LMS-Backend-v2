@@ -11,7 +11,8 @@ class AuthService {
       name,
       email,
       phoneNumber,
-      exam_registered_for
+      exam_registered_for,
+      is_email_verified
     } = userData;
   
     try {
@@ -25,7 +26,8 @@ class AuthService {
         email,
         phoneNumber,
         role:"student",
-        exam_registered_for
+        exam_registered_for,
+        is_email_verified
       });
   
       return { success: true, statusCode: 201, message: "User registered successfully" };
