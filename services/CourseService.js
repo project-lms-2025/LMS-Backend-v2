@@ -12,6 +12,10 @@ class CourseService {
         return CourseModel.getCourseById(course_id);
     }
 
+    static async getAllCourses() {
+        return CourseModel.getAllCourses();
+    }
+
     static async getCoursesByBatchId(batch_id) {
         return CourseModel.getCoursesByBatchId(batch_id);
     }

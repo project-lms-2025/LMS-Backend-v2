@@ -16,6 +16,10 @@ class ClassService {
         return ClassModel.getClassesByCourseId(course_id);
     }
 
+    static async getAllClasses(){
+        return ClassModel.getAllClasses();
+    }
+
     static async updateClass(class_id, updatedClassData) {
         return ClassModel.updateClass(class_id, updatedClassData);
     }

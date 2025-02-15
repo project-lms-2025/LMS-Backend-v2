@@ -27,6 +27,16 @@ class CourseController {
         }
     }
 
+    static async getAllCourses(req, res) {
+        try {
+            const courses = await CourseService.getAllCourses();
+            res.json(courses);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to get all courses' });
+        }
+    }
+
     static async getCoursesByBatchId(req, res) {
         try {
             const courses = await CourseService.getCoursesByBatchId(req.params.batch_id);

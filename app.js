@@ -12,10 +12,12 @@ import AuthMiddleware from './middleware/AuthMiddleware.js';
 import batchRoutes from "./routes/BatchRoutes.js"
 import courseRoutes from "./routes/CourseRoutes.js"
 import classRoutes from "./routes/ClassRoutes.js"
-
+import testRoutes from "./test/testRouter.js"
+import mainRoutes from './main/mainRoutes.js'
 
 const app = express();
-const swaggerDocument = YAML.load('./swagger.yaml');
+const mainSwagger = YAML.load('./swagger.yaml');
+const testSwagger = YAML.load('./test/swagger.yaml');
 
 app.use(cors({
     origin: ["http://127.0.0.1:5173", "http://localhost:5173"], 
@@ -30,7 +32,14 @@ app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// swagger setup
+app.use('/main-docs', swaggerUi.serve, (req, res) => {
+  return swaggerUi.setup(mainSwagger)(req, res);
+});
+
+app.use('/test-docs', swaggerUi.serve, (req, res) => {
+  return swaggerUi.setup(testSwagger)(req, res);
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', AuthMiddleware.auth, userRoutes);
@@ -38,6 +47,8 @@ app.use('/api/otp/', otpRoutes)
 app.use('/api/batch/', batchRoutes)
 app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
+app.use('/api/test/', testRoutes)
+app.use('/api/', mainRoutes)
 
 app.use(errorHandler);
 

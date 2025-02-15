@@ -37,6 +37,16 @@ class ClassController {
         }
     }
 
+    static async getAllClasses(req, res) {
+        try {
+            const classes = await ClassService.getAllClasses();
+            res.json(classes);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to get all classes' });
+        }
+    }
+    
     static async updateClass(req, res) {
         try {
             const updatedClass = await ClassService.updateClass(req.params.class_id, req.body);

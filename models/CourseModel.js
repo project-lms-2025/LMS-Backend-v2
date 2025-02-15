@@ -1,4 +1,4 @@
-import { PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
 import ddbClient from "../config/dynamoDB.js";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
@@ -32,6 +32,21 @@ class CourseModel {
             return data.Item ? unmarshall(data.Item) : null;
         } catch (error) {
             console.error("Error getting course:", error);
+            throw error;
+        }
+    }
+
+    static async getAllCourses() {
+        const params = {
+            TableName: process.env.COURSE_TABLE,
+        };
+
+        try {
+            const command = new ScanCommand(params);
+            const data = await ddbClient.send(command);
+            return data.Items ? data.Items.map(item => unmarshall(item)) : [];
+        } catch (error) {
+            console.error("Error getting all courses:", error);
             throw error;
         }
     }
