@@ -18,12 +18,11 @@ class QuestionModel {
 
     try {
       const command = new PutItemCommand(params);
-      const response = await ddbClient.send(command);
-      const data = response.Attributes ? unmarshall(response.Attributes) : question;
-      return { success: true, data };
+      await ddbClient.send(command);
+      return question;
     } catch (err) {
       console.error("Error creating question:", err);
-      return { success: false, message: "Error creating question" };
+      throw new Error("Error creating question");
     }
   }
 
@@ -37,30 +36,29 @@ class QuestionModel {
       const command = new GetItemCommand(params);
       const { Item } = await ddbClient.send(command);
       if (!Item) {
-        return { success: false, message: "Question not found" };
+        return null;
       }
-      return { success: true, data: unmarshall(Item) };
+      return unmarshall(Item);
     } catch (err) {
       console.error("Error getting question by ID:", err);
-      return { success: false, message: "Error getting question by ID" };
+      throw new Error("Error getting question by ID");
     }
   }
 
   static async getQuestionsByTestId(test_id) {
     const params = {
       TableName: process.env.QUESTIONS_TABLE,
-      FilterExpression: "test_id = :test_id", // Filter by test_id
+      FilterExpression: "test_id = :test_id",
       ExpressionAttributeValues: marshall({ ":test_id": test_id }),
     };
 
     try {
-      const command = new ScanCommand(params); // Use ScanCommand with filter
+      const command = new ScanCommand(params);
       const { Items } = await ddbClient.send(command);
-      const questions = Items ? Items.map((item) => unmarshall(item)) : [];
-      return { success: true, data: questions };
+      return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
       console.error("Error getting questions by test ID:", err);
-      return { success: false, message: "Error getting questions by test ID" };
+      throw new Error("Error getting questions by test ID");
     }
   }
 
@@ -69,7 +67,7 @@ class QuestionModel {
     const attributeValues = {};
 
     for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`<span class="math-inline">\{key\} \= \:</span>{key}`);
+      updateExpressions.push(`${key} = :${key}`);
       attributeValues[`:${key}`] = marshall({ [key]: value })[key];
     }
 
@@ -84,10 +82,10 @@ class QuestionModel {
     try {
       const command = new UpdateItemCommand(params);
       const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: unmarshall(Attributes) };
+      return unmarshall(Attributes);
     } catch (err) {
       console.error("Error updating question:", err);
-      return { success: false, message: "Error updating question" };
+      throw new Error("Error updating question");
     }
   }
 
@@ -100,10 +98,10 @@ class QuestionModel {
     try {
       const command = new DeleteItemCommand(params);
       await ddbClient.send(command);
-      return { success: true, message: "Question deleted successfully" };
+      return { success: true };
     } catch (err) {
       console.error("Error deleting question:", err);
-      return { success: false, message: "Error deleting question" };
+      throw new Error("Error deleting question");
     }
   }
 }

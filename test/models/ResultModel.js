@@ -17,12 +17,11 @@ class ResultModel {
 
     try {
       const command = new PutItemCommand(params);
-      const response = await ddbClient.send(command);
-      const data = response.Attributes ? unmarshall(response.Attributes) : result;
-      return { success: true, data };
+      await ddbClient.send(command);
+      return result;
     } catch (err) {
       console.error("Error creating result:", err);
-      return { success: false, message: "Error creating result" };
+      throw new Error("Error creating result");
     }
   }
 
@@ -36,12 +35,12 @@ class ResultModel {
       const command = new GetItemCommand(params);
       const { Item } = await ddbClient.send(command);
       if (!Item) {
-        return { success: false, message: "Result not found" };
+        return null;
       }
-      return { success: true, data: unmarshall(Item) };
+      return unmarshall(Item);
     } catch (err) {
       console.error("Error getting result by ID:", err);
-      return { success: false, message: "Error getting result by ID" };
+      throw new Error("Error getting result by ID");
     }
   }
 
@@ -55,11 +54,10 @@ class ResultModel {
     try {
       const command = new ScanCommand(params);
       const { Items } = await ddbClient.send(command);
-      const results = Items ? Items.map((item) => unmarshall(item)) : [];
-      return { success: true, data: results };
+      return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
       console.error("Error getting results by test ID:", err);
-      return { success: false, message: "Error getting results by test ID" };
+      throw new Error("Error getting results by test ID");
     }
   }
 
@@ -68,7 +66,7 @@ class ResultModel {
     const attributeValues = {};
 
     for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`<span class="math-inline">\{key\} \= \:</span>{key}`);
+      updateExpressions.push(`${key} = :${key}`);
       attributeValues[`:${key}`] = marshall({ [key]: value })[key];
     }
 
@@ -83,10 +81,10 @@ class ResultModel {
     try {
       const command = new UpdateItemCommand(params);
       const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: unmarshall(Attributes) };
+      return unmarshall(Attributes);
     } catch (err) {
       console.error("Error updating result:", err);
-      return { success: false, message: "Error updating result" };
+      throw new Error("Error updating result");
     }
   }
 
@@ -99,10 +97,10 @@ class ResultModel {
     try {
       const command = new DeleteItemCommand(params);
       await ddbClient.send(command);
-      return { success: true, message: "Result deleted successfully" };
+      return { success: true };
     } catch (err) {
       console.error("Error deleting result:", err);
-      return { success: false, message: "Error deleting result" };
+      throw new Error("Error deleting result");
     }
   }
 }

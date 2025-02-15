@@ -1,21 +1,14 @@
 import TestModel from '../models/TestModel.js';
+import { generateUniqueId } from '../../utils/idGenerator.js'
 
 class TestController {
   static async getAllTests(req, res) {
     try {
       const tests = await TestModel.getAllTests();
-      return res.status(200).json({
-        success: true,
-        message: 'Fetched all tests successfully.',
-        ...tests,
-      });
+      res.status(200).json(tests);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch tests.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to fetch tests' });
     }
   }
 
@@ -25,42 +18,26 @@ class TestController {
     try {
       const test = await TestModel.getTestById(test_id);
       if (!test) {
-        return res.status(404).json({
-          success: false,
-          message: 'Test not found.',
-        });
+        return res.status(404).json({ error: 'Test not found' });
       }
-      return res.status(200).json({
-        success: true,
-        message: 'Test fetched successfully.',
-        data: test,
-      });
+      res.status(200).json(test);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch the test.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to fetch the test' });
     }
   }
 
   // Create a new test
   static async createTest(req, res) {
     const testData = req.body;
+    testData.teacher_email = req.email
+    testData.test_id = generateUniqueId()
     try {
       await TestModel.createTest(testData);
-      return res.status(201).json({
-        success: true,
-        message: 'Test created successfully.',
-      });
+      res.status(201).json({ message: 'Test created successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create the test.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to create the test' });
     }
   }
 
@@ -71,24 +48,14 @@ class TestController {
     try {
       const test = await TestModel.getTestById(test_id);
       if (!test) {
-        return res.status(404).json({
-          success: false,
-          message: 'Test not found.',
-        });
+        return res.status(404).json({ error: 'Test not found' });
       }
 
       await TestModel.updateTest(test_id, updateData);
-      return res.status(200).json({
-        success: true,
-        message: 'Test updated successfully.',
-      });
+      res.status(200).json({ message: 'Test updated successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update the test.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to update the test' });
     }
   }
 
@@ -98,24 +65,14 @@ class TestController {
     try {
       const test = await TestModel.getTestById(test_id);
       if (!test) {
-        return res.status(404).json({
-          success: false,
-          message: 'Test not found.',
-        });
+        return res.status(404).json({ error: 'Test not found' });
       }
 
       await TestModel.deleteTest(test_id);
-      return res.status(200).json({
-        success: true,
-        message: 'Test deleted successfully.',
-      });
+      res.status(204).end();  // No content, indicating successful deletion
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to delete the test.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to delete the test' });
     }
   }
 }

@@ -2,9 +2,9 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { PutItemCommand, GetItemCommand, ScanCommand, UpdateItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 import ddbClient from "../../config/dynamoDB.js";
 
-
 class TestModel {
   static async createTest(test) {
+    console.log(test)
     const params = {
       TableName: process.env.TESTS_TABLE,
       Item: marshall(test),
@@ -12,12 +12,11 @@ class TestModel {
 
     try {
       const command = new PutItemCommand(params);
-      const response = await ddbClient.send(command);
-      const data = response.Attributes ? unmarshall(response.Attributes) : test;
-      return { success: true, data };
+      await ddbClient.send(command);
+      return test;
     } catch (err) {
       console.error("Error creating test:", err);
-      return { success: false, message: "Error creating test" };
+      throw new Error("Error creating test");
     }
   }
 
@@ -31,12 +30,12 @@ class TestModel {
       const command = new GetItemCommand(params);
       const { Item } = await ddbClient.send(command);
       if (!Item) {
-        return { success: false, message: "Test not found" };
+        return null;
       }
-      return { success: true, data: unmarshall(Item) };
+      return unmarshall(Item);
     } catch (err) {
       console.error("Error getting test by ID:", err);
-      return { success: false, message: "Error getting test by ID" };
+      throw new Error("Error getting test by ID");
     }
   }
 
@@ -48,11 +47,10 @@ class TestModel {
     try {
       const command = new ScanCommand(params);
       const { Items } = await ddbClient.send(command);
-      const tests = Items ? Items.map((item) => unmarshall(item)) : [];
-      return { success: true, data: tests };
+      return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
       console.error("Error getting all tests:", err);
-      return { success: false, message: "Error getting all tests" };
+      throw new Error("Error getting all tests");
     }
   }
 
@@ -61,7 +59,7 @@ class TestModel {
     const attributeValues = {};
 
     for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`<span class="math-inline">\{key\} \= \:</span>{key}`);
+      updateExpressions.push(`${key} = :${key}`);
       attributeValues[`:${key}`] = marshall({ [key]: value })[key];
     }
 
@@ -76,10 +74,10 @@ class TestModel {
     try {
       const command = new UpdateItemCommand(params);
       const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: unmarshall(Attributes) };
+      return unmarshall(Attributes);
     } catch (err) {
       console.error("Error updating test:", err);
-      return { success: false, message: "Error updating test" };
+      throw new Error("Error updating test");
     }
   }
 
@@ -92,10 +90,10 @@ class TestModel {
     try {
       const command = new DeleteItemCommand(params);
       await ddbClient.send(command);
-      return { success: true, message: "Test deleted successfully" };
+      return { success: true };
     } catch (err) {
       console.error("Error deleting test:", err);
-      return { success: false, message: "Error deleting test" };
+      throw new Error("Error deleting test");
     }
   }
 }

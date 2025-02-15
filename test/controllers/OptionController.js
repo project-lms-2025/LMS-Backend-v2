@@ -1,41 +1,29 @@
 import OptionModel from "../models/OptionModel.js";
+import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class OptionController {
   static async getOptionsForQuestion(req, res) {
     const { question_id } = req.params;
     try {
       const options = await OptionModel.getOptionsByQuestionId(question_id);
-      return res.status(200).json({
-        success: true,
-        message: "Fetched options for the question successfully.",
-        data: options,
-      });
+      res.status(200).json(options);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch options.",
-        error: error.message,
-      });
+      res.status(500).json({ error: "Failed to fetch options" });
     }
   }
 
   static async createOption(req, res) {
     const { question_id } = req.params;
     const optionData = req.body;
+    optionData.option_id = generateUniqueId();
+    optionData.question_id = question_id;
     try {
-      await OptionModel.createOption(question_id, optionData);
-      return res.status(201).json({
-        success: true,
-        message: "Option created successfully.",
-      });
+      await OptionModel.createOption(optionData);
+      res.status(201).json({ message: "Option created successfully" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to create the option.",
-        error: error.message,
-      });
+      res.status(500).json({ error: "Failed to create the option" });
     }
   }
 
@@ -44,17 +32,10 @@ class OptionController {
     const updateData = req.body;
     try {
       await OptionModel.updateOption(option_id, updateData);
-      return res.status(200).json({
-        success: true,
-        message: "Option updated successfully.",
-      });
+      res.status(200).json({ message: "Option updated successfully" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to update the option.",
-        error: error.message,
-      });
+      res.status(500).json({ error: "Failed to update the option" });
     }
   }
 
@@ -62,17 +43,10 @@ class OptionController {
     const { option_id } = req.params;
     try {
       await OptionModel.deleteOption(option_id);
-      return res.status(200).json({
-        success: true,
-        message: "Option deleted successfully.",
-      });
+      res.status(204).end();
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete the option.",
-        error: error.message,
-      });
+      res.status(500).json({ error: "Failed to delete the option" });
     }
   }
 }

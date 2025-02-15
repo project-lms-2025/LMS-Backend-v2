@@ -1,41 +1,29 @@
 import ResultModel from '../models/ResultModel.js';
+import { generateUniqueId } from '../../utils/idGenerator.js'
 
 class ResultController {
   static async getResultsForTest(req, res) {
     const { test_id } = req.params;
     try {
       const results = await ResultModel.getResultsByTestId(test_id);
-      return res.status(200).json({
-        success: true,
-        message: 'Fetched results for the test successfully.',
-        data: results,
-      });
+      res.status(200).json(results);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to fetch results.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to fetch results' });
     }
   }
 
   static async createResult(req, res) {
     const { test_id } = req.params;
     const resultData = req.body;
+    resultData.result_id = generateUniqueId();
+    resultData.test_id = test_id;
     try {
-      await ResultModel.createResult(test_id, resultData);
-      return res.status(201).json({
-        success: true,
-        message: 'Result created successfully.',
-      });
+      await ResultModel.createResult(resultData);
+      res.status(201).json({ message: 'Result created successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create the result.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to create the result' });
     }
   }
 
@@ -44,17 +32,21 @@ class ResultController {
     const updateData = req.body;
     try {
       await ResultModel.updateResult(result_id, updateData);
-      return res.status(200).json({
-        success: true,
-        message: 'Result updated successfully.',
-      });
+      res.status(200).json({ message: 'Result updated successfully' });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update the result.',
-        error: error.message,
-      });
+      res.status(500).json({ error: 'Failed to update the result' });
+    }
+  }
+
+  static async deleteResult(req, res) {
+    const { result_id } = req.params;
+    try {
+      await ResultModel.deleteResult(result_id);
+      res.status(204).end();  // No content, indicating successful deletion
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to delete the result' });
     }
   }
 }

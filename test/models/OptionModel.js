@@ -17,14 +17,11 @@ class OptionModel {
 
     try {
       const command = new PutItemCommand(params);
-      const response = await ddbClient.send(command);
-      const data = response.Attributes
-        ? unmarshall(response.Attributes)
-        : option;
-      return { success: true, data };
+      await ddbClient.send(command);
+      return option;
     } catch (err) {
       console.error("Error creating option:", err);
-      return { success: false, message: "Error creating option" };
+      throw new Error("Error creating option");
     }
   }
 
@@ -38,12 +35,12 @@ class OptionModel {
       const command = new GetItemCommand(params);
       const { Item } = await ddbClient.send(command);
       if (!Item) {
-        return { success: false, message: "Option not found" };
+        return null;
       }
-      return { success: true, data: unmarshall(Item) };
+      return unmarshall(Item);
     } catch (err) {
       console.error("Error getting option by ID:", err);
-      return { success: false, message: "Error getting option by ID" };
+      throw new Error("Error getting option by ID");
     }
   }
 
@@ -57,14 +54,10 @@ class OptionModel {
     try {
       const command = new ScanCommand(params);
       const { Items } = await ddbClient.send(command);
-      const options = Items ? Items.map((item) => unmarshall(item)) : [];
-      return { success: true, data: options };
+      return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
       console.error("Error getting options by question ID:", err);
-      return {
-        success: false,
-        message: "Error getting options by question ID",
-      };
+      throw new Error("Error getting options by question ID");
     }
   }
 
@@ -73,9 +66,7 @@ class OptionModel {
     const attributeValues = {};
 
     for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(
-        `<span class="math-inline">\{key\} \= \:</span>{key}`
-      );
+      updateExpressions.push(`${key} = :${key}`);
       attributeValues[`:${key}`] = marshall({ [key]: value })[key];
     }
 
@@ -90,10 +81,10 @@ class OptionModel {
     try {
       const command = new UpdateItemCommand(params);
       const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: unmarshall(Attributes) };
+      return unmarshall(Attributes);
     } catch (err) {
       console.error("Error updating option:", err);
-      return { success: false, message: "Error updating option" };
+      throw new Error("Error updating option");
     }
   }
 
@@ -106,10 +97,10 @@ class OptionModel {
     try {
       const command = new DeleteItemCommand(params);
       await ddbClient.send(command);
-      return { success: true, message: "Option deleted successfully" };
+      return { success: true };
     } catch (err) {
       console.error("Error deleting option:", err);
-      return { success: false, message: "Error deleting option" };
+      throw new Error("Error deleting option");
     }
   }
 }

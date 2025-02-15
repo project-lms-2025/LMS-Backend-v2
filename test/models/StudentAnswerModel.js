@@ -9,7 +9,14 @@ class StudentAnswerModel {
       Item: marshall({ test_id, student_id, answers }),
     };
 
-    await ddbClient.send(new PutItemCommand(params));
+    try {
+      const command = new PutItemCommand(params);
+      await ddbClient.send(command);
+      return true;
+    } catch (err) {
+      console.error("Error submitting answers:", err);
+      throw new Error("Error submitting answers");
+    }
   }
 }
 

@@ -17,10 +17,6 @@ components:
     Test:
       type: object
       properties:
-        test_id:
-          type: string
-        teacher_id:
-          type: string
         course_id:
           type: string
         title:
@@ -36,8 +32,6 @@ components:
     Question:
       type: object
       properties:
-        question_id:
-          type: string
         test_id:
           type: string
         question_type:
@@ -54,8 +48,6 @@ components:
     Option:
       type: object
       properties:
-        option_id:
-          type: string
         question_id:
           type: string
         option_text:
@@ -68,8 +60,6 @@ components:
     Result:
       type: object
       properties:
-        result_id:
-          type: string
         test_id:
           type: string
         student_id:
