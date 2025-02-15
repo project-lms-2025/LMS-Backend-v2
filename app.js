@@ -14,13 +14,14 @@ import courseRoutes from "./routes/CourseRoutes.js"
 import classRoutes from "./routes/ClassRoutes.js"
 import testRoutes from "./test/testRouter.js"
 import mainRoutes from './main/mainRoutes.js'
+import userAssignmentRoutes from './routes/UserAssignmentRoutes.js'
 
 const app = express();
 const mainSwagger = YAML.load('./swagger.yaml');
 const testSwagger = YAML.load('./test/swagger.yaml');
 
 app.use(cors({
-    origin: ["http://127.0.0.1:5173", "http://localhost:5173"], 
+    origin: ["http://127.0.0.1:5173", "http://localhost:5173", "https://lmssystem01.vercel.app/"], 
     methods: "GET,POST,PUT,DELETE",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
@@ -48,6 +49,7 @@ app.use('/api/batch/', batchRoutes)
 app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
 app.use('/api/test/', testRoutes)
+app.use("/api/admin", AuthMiddleware.auth, userAssignmentRoutes);
 app.use('/api/', mainRoutes)
 
 app.use(errorHandler);

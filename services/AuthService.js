@@ -12,7 +12,7 @@ class AuthService {
       email,
       phoneNumber,
       exam_registered_for,
-      is_email_verified
+      is_email_verified,
     } = userData;
   
     try {
@@ -27,7 +27,8 @@ class AuthService {
         phoneNumber,
         role:"student",
         exam_registered_for,
-        is_email_verified
+        is_email_verified,
+        created_at: Date.now(),
       });
   
       return { success: true, statusCode: 201, message: "User registered successfully" };

@@ -7,14 +7,271 @@ info:
 tags:
   - name: auth
     description: Authentication related operations
+  - name: batch
+    description: Batch related operations
+  - name: course
+    description: Course related operations
+  - name: class
+    description: Class related operations
+  - name: admin
+    description: Admin related operations
+
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    UserInput:  # Reusable schema for user input
+      type: object
+      required:
+        - name
+        - email
+        - phoneNumber
+      properties:
+        name:
+          type: string
+          description: User's name
+        email:
+          type: string
+          format: email
+          description: User's email address
+        phoneNumber:
+          type: string
+          description: User's phone number
+    UserWithRoleInput: # Extends UserInput for create-user
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+        - type: object
+          required:
+            - role
+          properties:
+            role:
+              type: string
+              enum: [admin, sub-admin, owner, teacher]
+              description: User's role
+    AuthResponse: # Reusable for successful auth responses (e.g., register, create-user)
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - otp
+        - deviceType
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        otp:
+          type: string
+          description: One-time password
+        deviceType:
+          type: string
+          description: Type of device used for login
+    LoginResponse:
+      type: object
+      properties:
+        authToken:
+          type: string
+          description: Authentication token
+    OTPRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+    PhoneNumberRequest:
+       type: object
+       required:
+         - phoneNumber
+       properties:
+         phoneNumber:
+           type: string
+           description: User's phone number
+
+    BatchInput:
+      type: object
+      required:
+        - batch_name
+        - description
+      properties:
+        batch_name:
+          type: string
+          description: Name of the batch
+        description:
+          type: string
+          description: Description of the batch
+    BatchResponse: # Reusable for batch responses
+       type: object
+       properties:
+         batch_id:
+           type: string
+           description: Unique ID of the batch
+         teacher_email:
+           type: string
+           format: email
+           description: Email of the teacher creating the batch
+         batch_name:
+           type: string
+           description: Name of the batch
+         description:
+           type: string
+           description: Description of the batch
+
+    CourseInput:
+      type: object
+      required:
+        - batch_id
+        - course_name
+        - allow_notes_download
+      properties:
+        batch_id:
+          type: string
+          description: ID of the batch
+        course_name:
+          type: string
+          description: Name of the course
+        allow_notes_download:
+          type: boolean
+          description: Whether notes download is allowed
+    CourseResponse:
+       type: object
+       properties:
+         course_id:
+           type: string
+           description: Unique ID of the course
+         teacher_id:
+           type: string
+           description: ID of the teacher
+         batch_id:
+           type: string
+           description: ID of the batch
+         course_name:
+           type: string
+           description: Name of the course
+         allow_notes_download:
+           type: boolean
+           description: Whether notes download is allowed
+
+    ClassInput:
+      type: object
+      required:
+        - course_id
+        - class_title
+        - class_date_time
+      properties:
+        course_id:
+          type: string
+          description: ID of the course
+        class_title:
+          type: string
+          description: Title of the class
+        class_date_time:
+          type: string
+          format: date-time
+          description: Date and time of the class
+        recording_url:
+          type: string
+          description: URL of the recording (optional)
+    ClassResponse:
+       type: object
+       properties:
+         class_id:
+           type: string
+           description: Unique ID of the class
+         teacher_id:
+           type: string
+           description: ID of the teacher
+         course_id:
+           type: string
+           description: ID of the course
+         class_title:
+           type: string
+           description: Title of the class
+         class_date_time:
+           type: string
+           format: date-time
+           description: Date and time of the class
+         recording_url:
+           type: string
+           description: URL of the recording (optional)
+
+    UserAssignment:
+      type: object
+      required:
+        - entityType
+        - entity_id
+        - user
+      properties:
+        entityType:
+          type: string
+          enum: [batch, course]
+        entity_id:
+          type: string
+        user:
+          type: string
+
+    MultipleUserAssignment:
+      type: object
+      required:
+        - entityType
+        - entity_id
+        - users
+      properties:
+        entityType:
+          type: string
+          enum: [batch, course]
+        entity_id:
+          type: string
+        users:
+          type: array
+          items:
+            type: string
+
+    BulkUserAssignment:
+      type: object
+      required:
+        - entityType
+        - entityUsers
+      properties:
+        entityType:
+          type: string
+          enum: [batch, course]
+        entityUsers:
+          type: array
+          items:
+            type: object
+            required:
+              - entity_id
+              - users
+            properties:
+              entity_id:
+                type: string
+              users:
+                type: array
+                items:
+                  type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Success message here."
+
 
 paths:
+  # ... (All paths defined below using the reusable components)
+
   /api/auth/register:
     post:
       tags:
@@ -24,72 +281,58 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: User's name
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-                phoneNumber:
-                  type: string
-                  description: User's phone number
-                exam_registered_for:
-                  type: string
-                  description: exam for which user registered
-              required:
-                - name
-                - email
-                - phoneNumber
+              $ref: '#/components/schemas/UserInput'
       responses:
         '201':
           description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '400':
           description: User already exists or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/auth/create-user:
     post:
       tags:
         - auth
-      security: 
+      security:
         - BearerAuth: []
-      summary: Create a user with a specific role (Admin/Sub-admin/Owner)
+      summary: Create a user with a specific role
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: User's name
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-                phoneNumber:
-                  type: string
-                  description: User's phone number
-                role:
-                  type: string
-                  enum: [admin, sub-admin, owner, teacher]
-                  description: User's role
-              required:
-                - name
-                - email
-                - phoneNumber
-                - role
+              $ref: '#/components/schemas/UserWithRoleInput'
       responses:
         '201':
           description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
         '400':
           description: User already exists or invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/auth/login:
     post:
@@ -100,37 +343,27 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-                otp:
-                  type: string
-                  description: One-time password
-                deviceType:
-                  type: string
-                  description: Type of device used for login
-              required:
-                - email
-                - otp
-                - deviceType
+              $ref: '#/components/schemas/LoginRequest'
+
       responses:
         '200':
           description: Login successful
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  authToken:
-                    type: string
-                    description: Authentication token
+                $ref: '#/components/schemas/LoginResponse'
         '400':
           description: Invalid email or OTP or OTP expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/auth/send-login-otp:
     post:
@@ -141,29 +374,26 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                phoneNumber:
-                  type: string
-                  description: User's phone number
-              required:
-                - phoneNumber
+              $ref: '#/components/schemas/PhoneNumberRequest'
       responses:
         '200':
           description: OTP sent successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  email:
-                    type: string
-                    format: email
-                    description: User's email
+                $ref: '#/components/schemas/OTPRequest'
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/auth/logout:
     post:
@@ -174,23 +404,20 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-                deviceType:
-                  type: string
-                  description: Type of device used for logout
-              required:
-                - email
-                - deviceType
+              $ref: '#/components/schemas/LoginRequest' # Reuse LoginRequest as it has the required fields
       responses:
         '200':
           description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/otp/send:
     post:
@@ -201,21 +428,26 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-              required:
-                - email
+              $ref: '#/components/schemas/OTPRequest'
       responses:
         '200':
           description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '400':
           description: Email is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Failed to send OTP or internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/otp/verify:
     post:
@@ -226,25 +458,26 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: User's email address
-                otp:
-                  type: string
-                  description: One-time password
-              required:
-                - email
-                - otp
+              $ref: '#/components/schemas/LoginRequest' # Reuse LoginRequest as it has the required fields
       responses:
         '200':
           description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '400':
           description: Email and OTP are required or OTP has expired or invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/user/update:
     put:
@@ -255,19 +488,21 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              # Add properties as needed for user updates.  Example:
-              properties:
-                name:
-                  type: string
-                  description: Updated user name
-                # ... other fields to update
+              $ref: '#/components/schemas/UserInput' # Could create a separate schema if different fields are updatable.
       responses:
         '200':
           description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/user/delete:
@@ -278,9 +513,17 @@ paths:
       responses:
         '200':
           description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/user/{email}:
@@ -299,12 +542,22 @@ paths:
       responses:
         '200':
           description: User details retrieved successfully
+          # You would likely have a User schema here to define the user details
         '404':
           description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Internal server error
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
+
   /api/batch:
     post:
       tags:
@@ -314,43 +567,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                batch_name:
-                  type: string
-                  description: Name of the batch
-                description:
-                  type: string
-                  description: Description of the batch
-              required:
-                - batch_name
-                - description
+              $ref: '#/components/schemas/BatchInput'
       responses:
         '201':
           description: Batch created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  batch_id:
-                    type: string
-                    description: Unique ID of the batch
-                  teacher_email:
-                    type: string
-                    format: email
-                    description: Email of the teacher creating the batch
-                  batch_name:
-                    type: string
-                    description: Name of the batch
-                  description:
-                    type: string
-                    description: Description of the batch
+                $ref: '#/components/schemas/BatchResponse'
         '500':
           description: Failed to create batch
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
-
     get:
       tags:
         - batch
@@ -363,23 +595,13 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    batch_id:
-                      type: string
-                      description: Unique ID of the batch
-                    teacher_email:
-                      type: string
-                      format: email
-                      description: Email of the teacher creating the batch
-                    batch_name:
-                      type: string
-                      description: Name of the batch
-                    description:
-                      type: string
-                      description: Description of the batch
+                  $ref: '#/components/schemas/BatchResponse'
         '500':
           description: Failed to get all batches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
 
   /api/batch/{batch_id}:
     get:
@@ -399,26 +621,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  batch_id:
-                    type: string
-                    description: Unique ID of the batch
-                  teacher_email:
-                    type: string
-                    format: email
-                    description: Email of the teacher creating the batch
-                  batch_name:
-                    type: string
-                    description: Name of the batch
-                  description:
-                    type: string
-                    description: Description of the batch
+                $ref: '#/components/schemas/BatchResponse'
         '404':
           description: Batch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Failed to get batch
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
     put:
       tags:
         - batch
@@ -434,28 +649,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                batch_name:
-                  type: string
-                  description: Updated name of the batch
-                description:
-                  type: string
-                  description: Updated description of the batch
-                # Add other fields as needed for updates
+              $ref: '#/components/schemas/BatchInput' #  Allow partial updates by not requiring all fields.
       responses:
         '200':
           description: Batch updated successfully
           content:
             application/json:
               schema:
-                type: object
-                # ... properties of the updated batch
+                $ref: '#/components/schemas/BatchResponse'
         '500':
           description: Failed to update batch
-      security: 
-        - BearerAuth: []
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
+        - Bearer
     delete:
       tags:
         - batch
@@ -472,8 +681,13 @@ paths:
           description: Batch deleted successfully
         '500':
           description: Failed to delete batch
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
+
   /api/course:
     post:
       tags:
@@ -483,47 +697,21 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                batch_id:
-                  type: string
-                  description: ID of the batch
-                course_name:
-                  type: string
-                  description: Name of the course
-                allow_notes_download:
-                  type: boolean
-                  description: Whether notes download is allowed
-              required:
-                - batch_id
-                - course_name
-                - allow_notes_download
+              $ref: '#/components/schemas/CourseInput'
       responses:
         '201':
           description: Course created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  course_id:
-                    type: string
-                    description: Unique ID of the course
-                  teacher_id:
-                    type: string
-                    description: ID of the teacher
-                  batch_id:
-                    type: string
-                    description: ID of the batch
-                  course_name:
-                    type: string
-                    description: Name of the course
-                  allow_notes_download:
-                    type: boolean
-                    description: Whether notes download is allowed
+                $ref: '#/components/schemas/CourseResponse'
         '500':
           description: Failed to create course
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/course/{course_id}:
@@ -544,28 +732,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  course_id:
-                    type: string
-                    description: Unique ID of the course
-                  teacher_id:
-                    type: string
-                    description: ID of the teacher
-                  batch_id:
-                    type: string
-                    description: ID of the batch
-                  course_name:
-                    type: string
-                    description: Name of the course
-                  allow_notes_download:
-                    type: boolean
-                    description: Whether notes download is allowed
+                $ref: '#/components/schemas/CourseResponse'
         '404':
           description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Failed to get course
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
     put:
       tags:
         - course
@@ -581,30 +760,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                batch_id:
-                  type: string
-                  description: ID of the batch
-                course_name:
-                  type: string
-                  description: Name of the course
-                allow_notes_download:
-                  type: boolean
-                  description: Whether notes download is allowed
+              $ref: '#/components/schemas/CourseInput' # Allow partial updates
       responses:
         '200':
           description: Course updated successfully
           content:
             application/json:
               schema:
-                type: object
-                # ... properties of the updated course
+                $ref: '#/components/schemas/CourseResponse'
         '500':
           description: Failed to update course
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
-
     delete:
       tags:
         - course
@@ -621,7 +792,11 @@ paths:
           description: Course deleted successfully
         '500':
           description: Failed to delete course
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/course/batch/{batch_id}:
@@ -644,25 +819,14 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    course_id:
-                      type: string
-                      description: Unique ID of the course
-                    teacher_id:
-                      type: string
-                      description: ID of the teacher
-                    batch_id:
-                      type: string
-                      description: ID of the batch
-                    course_name:
-                      type: string
-                      description: Name of the course
-                    allow_notes_download:
-                      type: boolean
-                      description: Whether notes download is allowed
+                  $ref: '#/components/schemas/CourseResponse'
         '500':
           description: Failed to get courses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
   /api/class:
     post:
       tags:
@@ -672,55 +836,21 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                course_id:
-                  type: string
-                  description: ID of the course
-                class_title:
-                  type: string
-                  description: Title of the class
-                class_date_time:
-                  type: string
-                  format: date-time  # Or a more specific date/time format if needed
-                  description: Date and time of the class
-                recording_url:
-                  type: string
-                  description: URL of the recording (optional)
-              required:
-                - course_id
-                - class_title
-                - class_date_time
+              $ref: '#/components/schemas/ClassInput'
       responses:
         '201':
           description: Class created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  class_id:
-                    type: string
-                    description: Unique ID of the class
-                  teacher_id:
-                    type: string
-                    description: ID of the teacher
-                  course_id:
-                    type: string
-                    description: ID of the course
-                  class_title:
-                    type: string
-                    description: Title of the class
-                  class_date_time:
-                    type: string
-                    format: date-time
-                    description: Date and time of the class
-                  recording_url:
-                    type: string
-                    description: URL of the recording (optional)
+                $ref: '#/components/schemas/ClassResponse'
         '500':
           description: Failed to create class
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/class/{class_id}:
@@ -741,32 +871,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  class_id:
-                    type: string
-                    description: Unique ID of the class
-                  teacher_id:
-                    type: string
-                    description: ID of the teacher
-                  course_id:
-                    type: string
-                    description: ID of the course
-                  class_title:
-                    type: string
-                    description: Title of the class
-                  class_date_time:
-                    type: string
-                    format: date-time
-                    description: Date and time of the class
-                  recording_url:
-                    type: string
-                    description: URL of the recording (optional)
+                $ref: '#/components/schemas/ClassResponse'
         '404':
           description: Class not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
         '500':
           description: Failed to get class
-
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
     put:
       tags:
         - class
@@ -782,36 +899,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                course_id:
-                  type: string
-                  description: ID of the course
-                class_title:
-                  type: string
-                  description: Title of the class
-                class_date_time:
-                  type: string
-                  format: date-time
-                  description: Date and time of the class
-                recording_url:
-                  type: string
-                  description: URL of the recording (optional)
-              # No required fields here, as it's an update.
-              # But you can mark fields as required if they *must* be updated
+              $ref: '#/components/schemas/ClassInput' # Allow partial updates
       responses:
         '200':
           description: Class updated successfully
           content:
             application/json:
               schema:
-                type: object
-                # ... properties of the updated class
+                $ref: '#/components/schemas/ClassResponse'
         '500':
           description: Failed to update class
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
-
     delete:
       tags:
         - class
@@ -828,7 +931,11 @@ paths:
           description: Class deleted successfully
         '500':
           description: Failed to delete class
-      security: 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
         - BearerAuth: []
 
   /api/class/course/{course_id}:
@@ -851,26 +958,107 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    class_id:
-                      type: string
-                      description: Unique ID of the class
-                    teacher_id:
-                      type: string
-                      description: ID of the teacher
-                    course_id:
-                      type: string
-                      description: ID of the course
-                    class_title:
-                      type: string
-                      description: Title of the class
-                    class_date_time:
-                      type: string
-                      format: date-time
-                      description: Date and time of the class
-                    recording_url:
-                      type: string
-                      description: URL of the recording (optional)
+                  $ref: '#/components/schemas/ClassResponse'
         '500':
           description: Failed to get classes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/assignUserToEntity:
+    post:
+      summary: Assign a single user to a batch or course
+      operationId: assignUserToEntity
+      tags:
+        - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAssignment'
+      responses:
+        '200':
+          description: User successfully assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/assignUsersToEntity:
+    post:
+      summary: Assign multiple users to a batch or course
+      operationId: assignUsersToEntity
+      tags:
+        - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultipleUserAssignment'
+      responses:
+        '200':
+          description: Users successfully assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/bulkAssignUsersToEntities:
+    post:
+      summary: Bulk assign users to multiple batches or courses
+      operationId: bulkAssignUsersToEntities
+      tags:
+        - admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkUserAssignment'
+      responses:
+        '200':
+          description: Users successfully bulk assigned to entities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Missing or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        
