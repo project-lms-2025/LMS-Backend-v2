@@ -1,11 +1,11 @@
-import CourseAssignmentModel from "../models/CourseAssignmentModel.js";
+import UserAssignmentModel from "../models/UserAssignmentModel.js";
 
 class CourseAssignmentController {
   static async assignEntityToCourse(req, res) {
     const { course_id, entity } = req.body;
 
     try {
-      const result = await CourseAssignmentModel.assignEntityToCourse(
+      const result = await UserAssignmentModel.assignUser(
         course_id,
         entity
       );
@@ -20,7 +20,7 @@ class CourseAssignmentController {
     const { courseEntityAssignments } = req.body;
 
     try {
-      const result = await CourseAssignmentModel.bulkAssignEntitiesToCourses(
+      const result = await UserAssignmentModel.assignBatchUsers(
         courseEntityAssignments
       );
       res.status(200).json({ success: true, data: result });

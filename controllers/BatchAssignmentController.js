@@ -1,11 +1,11 @@
-import BatchAssignmentModel from "../models/BatchAssignmentModel.js";
+import UserAssignmentModel from "../models/UserAssignmentModel.js";
 
 class BatchAssignmentController {
   static async assignEntityToBatch(req, res) {
     const { batch_id, entity } = req.body;
 
     try {
-      const result = await BatchAssignmentModel.assignEntityToBatch(
+      const result = await UserAssignmentModel.assignUser(
         batch_id,
         entity
       );
@@ -20,7 +20,7 @@ class BatchAssignmentController {
     const { batchEntityAssignments } = req.body;
 
     try {
-      const result = await BatchAssignmentModel.bulkAssignEntitiesToBatches(
+      const result = await UserAssignmentModel.assignBatchUsers(
         batchEntityAssignments
       );
       res.status(200).json({ success: true, data: result });
