@@ -21,7 +21,7 @@ const mainSwagger = YAML.load('./swagger.yaml');
 const testSwagger = YAML.load('./test/swagger.yaml');
 
 app.use(cors({
-    origin: ["http://127.0.0.1:5173", "http://localhost:5173", "https://lmssystem01.vercel.app/", "https://teachertech.in"], 
+    origin: ["http://127.0.0.1:5173", "http://localhost:5173", "https://lmssystem01.vercel.app/", "https://www.teachertech.in"], 
     methods: "GET,POST,PUT,DELETE",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
