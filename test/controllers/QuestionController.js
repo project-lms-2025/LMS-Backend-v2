@@ -2,7 +2,6 @@ import QuestionModel from '../models/QuestionModel.js';
 import { generateUniqueId } from '../../utils/idGenerator.js';
 
 class QuestionController {
-  // Get all questions for a test
   static async getQuestionsForTest(req, res) {
     const { test_id } = req.params;
     try {
@@ -14,7 +13,6 @@ class QuestionController {
     }
   }
 
-  // Get a specific question by ID
   static async getQuestionById(req, res) {
     const { question_id } = req.params;
     try {
@@ -29,13 +27,17 @@ class QuestionController {
     }
   }
 
-  // Create a new question for a test
   static async createQuestion(req, res) {
     const { test_id } = req.params;
     const questionData = req.body;
     questionData.question_id = generateUniqueId();
     questionData.test_id = test_id;
+
     try {
+      if (req.body.picture_url) {
+        questionData.picture_url = req.body.picture_url; // The URL will be passed from the frontend
+      }
+
       await QuestionModel.createQuestion(questionData);
       res.status(201).json({ message: 'Question created successfully' });
     } catch (error) {
@@ -44,10 +46,10 @@ class QuestionController {
     }
   }
 
-  // Update a question by ID
   static async updateQuestion(req, res) {
     const { question_id } = req.params;
     const updateData = req.body;
+
     try {
       const question = await QuestionModel.getQuestionById(question_id);
       if (!question) {
@@ -62,7 +64,6 @@ class QuestionController {
     }
   }
 
-  // Delete a question by ID
   static async deleteQuestion(req, res) {
     const { question_id } = req.params;
     try {
@@ -72,7 +73,7 @@ class QuestionController {
       }
 
       await QuestionModel.deleteQuestion(question_id);
-      res.status(204).end();  
+      res.status(204).end();
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to delete the question' });
