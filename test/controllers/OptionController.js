@@ -13,6 +13,26 @@ class OptionController {
     }
   }
 
+  static async getCorrectOptions(req, res) {
+    try {
+      const { test_id } = req.params;
+
+      const correctOptions = await OptionModel.getCorrectOptionsByTestId(test_id);
+
+      const formattedOptions = correctOptions.reduce((acc, option) => {
+        acc[option.question_id] = option.option_id;
+        return acc;
+      }, {});
+      
+
+      return formattedOptions;
+    } catch (err) {
+      console.error("Error fetching correct options:", err);
+      throw new Error("Error fetching correct options");
+      
+    }
+  }
+
   static async createOption(req, res) {
     const { question_id } = req.params;
     const optionData = req.body;

@@ -45,6 +45,7 @@ class TestController {
   static async updateTest(req, res) {
     const { test_id } = req.params;
     const updateData = req.body;
+    console.log(test_id)
     try {
       const test = await TestModel.getTestById(test_id);
       if (!test) {

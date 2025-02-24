@@ -47,20 +47,24 @@ class QuestionModel {
 
   static async getQuestionsByTestId(test_id) {
     const params = {
-      TableName: process.env.QUESTIONS_TABLE,
-      FilterExpression: "test_id = :test_id",
-      ExpressionAttributeValues: marshall({ ":test_id": test_id }),
+        TableName: process.env.QUESTIONS_TABLE,
+        IndexName: "test_id-index",
+        KeyConditionExpression: "test_id = :test_id",
+        ExpressionAttributeValues: marshall({
+            ":test_id": test_id,
+        }),
     };
 
     try {
-      const command = new ScanCommand(params);
-      const { Items } = await ddbClient.send(command);
-      return Items ? Items.map((item) => unmarshall(item)) : [];
+        const command = new QueryCommand(params);
+        const { Items } = await ddbClient.send(command);
+        console.log(Items)
+        return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
-      console.error("Error getting questions by test ID:", err);
-      throw new Error("Error getting questions by test ID");
+        console.error("Error getting questions by test ID:", err);
+        throw new Error("Error getting questions by test ID");
     }
-  }
+}
 
   static async updateQuestion(question_id, updatedFields) {
     const updateExpressions = [];

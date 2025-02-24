@@ -28,6 +28,24 @@ components:
           format: date-time
         time_duration:
           type: integer
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id:
+                type: string
+              answers:
+                type: array
+                items:
+                  type: string
+      required:
+        - course_id
+        - title
+        - description
+        - scheduled_date_time
+        - time_duration
+
 
     Question:
       type: object
@@ -38,18 +56,20 @@ components:
           type: string
         question_text:
           type: string
+        answers:
+          type: array
+          items:
+            type: string
         image_url:
           type: string
         positive_marks:
           type: integer
         negative_marks:
           type: integer
-
+    
     Option:
       type: object
       properties:
-        question_id:
-          type: string
         option_text:
           type: string
         image_url:
@@ -57,12 +77,13 @@ components:
         is_correct:
           type: boolean
 
+
     Result:
       type: object
       properties:
         test_id:
           type: string
-        student_id:
+        email:
           type: string
         student_score:
           type: integer
@@ -78,7 +99,7 @@ components:
     StudentAnswers:
       type: object
       properties:
-        student_id:
+        email:
           type: string
         answers:
           type: array
@@ -87,14 +108,13 @@ components:
             properties:
               question_id:
                 type: string
-              response_text:
+              chosen_answer:
                 type: string
-              option_ids:
-                type: array
-                items:
-                  type: string
-              is_correct:
-                type: boolean
+              postive_marks:
+                type: integer
+              negative_marks:
+                type: integer
+
 
 paths:
   /tests:
@@ -372,6 +392,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Option'
+  /getCorrectOptions/{test_id}:
+    get:
+      summary: Get the correct options for a specific test
+      tags:
+        - test/options
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          description: The ID of the test
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of correct options for the test
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    option_id:
+                      type: string
+                    option_text:
+                      type: string
+                    is_correct:
+                      type: boolean
+        '404':
+          description: Test not found
+        '500':
+          description: Internal server error
 
   /options/{option_id}:
     put:
@@ -523,29 +577,112 @@ paths:
 
   /tests/{test_id}/submit:
     post:
-      summary: Submit student answers for a test
-      tags:
-        - student_answers
+      summary: Calculate student scores for a test.
+      description: Calculates the score for a student's answers to a test.
       security:
         - BearerAuth: []
       parameters:
-        - name: test_id
-          in: path
+        - in: path
+          name: test_id
           required: true
-          description: The ID of the test
           schema:
             type: string
+          description: The ID of the test.
       requestBody:
-        description: Student responses for the test
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StudentAnswers'
+              type: object
+              properties:
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      question_id:
+                        type: string
+                        description: The ID of the question.
+                      chosen_answer:
+                        type: array
+                        items:
+                          type: string
+                        description: The student's chosen answer(s).
+                    required:
+                      - question_id
+                      - chosen_answer
+              required:
+                - answers
       responses:
-        '201':
-          description: Student answers submitted successfully
+        '200':
+          description: Successful score calculation.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StudentAnswers'
+                type: object
+                properties:
+                  student_email:
+                    type: string
+                    description: The student's email.
+                  test_id:
+                    type: string
+                    description: The ID of the test.
+                  total_score:
+                    type: integer
+                    description: The total score achieved by the student.
+                  correct_count:
+                    type: integer
+                    description: The number of correct answers.
+                  wrong_count:
+                    type: integer
+                    description: The number of incorrect answers.
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question_id:
+                          type: string
+                          description: The ID of the question.
+                        score:
+                          type: number
+                          description: The score for the question.
+                        message:
+                          type: string
+                          description: Optional message, e.g., "Question not found".
+        '400':
+          description: Invalid request format.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Questions not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

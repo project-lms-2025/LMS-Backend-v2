@@ -5,6 +5,7 @@ import {
   GetItemCommand,
   UpdateItemCommand,
   DeleteItemCommand,
+  QueryCommand,
   ScanCommand,
 } from "@aws-sdk/client-dynamodb";
 
@@ -60,6 +61,31 @@ class OptionModel {
       throw new Error("Error getting options by question ID");
     }
   }
+
+  static async getCorrectOptionsByTestId(test_id) {
+    const params = {
+      TableName: process.env.OPTIONS_TABLE,
+      IndexName: "test_id-index",
+      KeyConditionExpression: "test_id = :test_id",
+      FilterExpression: "is_correct = :is_correct",
+      ExpressionAttributeValues: marshall({
+        ":test_id": test_id,
+        ":is_correct": true,
+      }),
+    };
+  
+    try {
+      const command = new QueryCommand(params);
+      const { Items } = await ddbClient.send(command);
+      const options = Items ? Items.map((item) => unmarshall(item)) : [];
+  
+      return options;
+    } catch (err) {
+      console.error("Error getting correct options by test ID:", err);
+      throw new Error("Error getting correct options by test ID");
+    }
+  }
+  
 
   static async updateOption(option_id, updatedFields) {
     const updateExpressions = [];

@@ -7,5 +7,6 @@ router.get('/questions/:question_id/options', OptionController.getOptionsForQues
 router.post('/questions/:question_id/options', OptionController.createOption);
 router.put('/options/:option_id', OptionController.updateOption);
 router.delete('/options/:option_id', OptionController.deleteOption);
+router.get("/getCorrectOptions/:test_id", OptionController.getCorrectOptions);
 
 export default router;
