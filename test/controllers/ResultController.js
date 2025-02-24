@@ -132,7 +132,6 @@ class ResultController {
               });
               continue;
           }
-          console.log(this)
           const score = await ResultController.calculateScore(question, chosen_answer);
           student_score += score;
 

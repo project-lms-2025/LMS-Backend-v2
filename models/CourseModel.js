@@ -95,7 +95,6 @@ class CourseModel {
 
         updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -2);
 
-        console.log(updateParams)
 
         try {
             const command = new UpdateItemCommand(updateParams);

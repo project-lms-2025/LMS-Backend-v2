@@ -58,7 +58,6 @@ class QuestionModel {
     try {
         const command = new QueryCommand(params);
         const { Items } = await ddbClient.send(command);
-        console.log(Items)
         return Items ? Items.map((item) => unmarshall(item)) : [];
     } catch (err) {
         console.error("Error getting questions by test ID:", err);

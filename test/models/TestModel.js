@@ -4,7 +4,6 @@ import ddbClient from "../../config/dynamoDB.js";
 
 class TestModel {
   static async createTest(test) {
-    console.log(test)
     const params = {
       TableName: process.env.TESTS_TABLE,
       Item: marshall(test),
