@@ -1,200 +1,77 @@
-import ddbClient from "../config/dynamoDB.js";
-import {
-  PutItemCommand,
-  GetItemCommand,
-  UpdateItemCommand,
-  DeleteItemCommand,
-  QueryCommand,
-} from "@aws-sdk/client-dynamodb";
-import dotenv from "dotenv";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-
-dotenv.config();
+import { generateUniqueId } from "../utils/idGenerator.js";
+import connection from "../config/database.js";
 
 class UserModel {
-  static async createUser(user) {
-    const authParams = {
-      TableName: process.env.AUTH_TABLE,
-      Item: marshall({
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        exam_registered_for:user.exam_registered_for || null
-      }),
-    };
-
+  static async createUser({ name, email, phoneNumber, role }) {
+    const user_id = generateUniqueId();
+    const query = 'INSERT INTO users (user_id, name, email, phoneNumber, role) VALUES (?, ?, ?, ?, ?)';
     try {
-      const authCommand = new PutItemCommand(authParams);
-      await ddbClient.send(authCommand);
-      return { success: true, message: "User created successfully" };
+      await connection.query(query, [user_id, name, email, phoneNumber, role]);
+      return { success: true, message: "User created successfully", data: user_id };
     } catch (err) {
-      console.error("Error creating user in DynamoDB:", err);
-      return { success: false, message: "Error creating user" };
+      return { success: false, message: err.message || 'Error creating user' };
     }
   }
 
   static async getUserByEmail(email) {
-    const authParams = {
-      TableName: process.env.AUTH_TABLE,
-      Key: marshall({ email }),
-    };
-
+    const query = 'SELECT * FROM users WHERE email = ?';
     try {
-      const authCommand = new GetItemCommand(authParams);
-      const { Item: authItem } = await ddbClient.send(authCommand);
-      if (!authItem) {
-        return { success: false, message: "User not found" };
-      }
-
-      const user = unmarshall(authItem);
-
-      return {
-        success: true,
-        data: user,
-      };
+      const [results] = await connection.query(query, [email]);
+      return results.length ? { success: true, data: results[0] } : { success: false, message: "User not found" };
     } catch (err) {
-      console.error("Error fetching user from DynamoDB:", err);
-      return { success: false, error: "Error fetching user" };
+      return { success: false, message: err.message || 'Error fetching user' };
     }
   }
 
-  static async getUserPhoneNumber(phoneNumber){
-    const params = {
-      TableName: process.env.AUTH_TABLE,
-      IndexName: 'phoneNumber-index',
-      KeyConditionExpression: 'phoneNumber = :phoneNumber',
-      ExpressionAttributeValues: {
-        ':phoneNumber': { S: phoneNumber }
-      }
-    };
-
+  static async getUserPhoneNumber(phoneNumber) {
+    const query = 'SELECT * FROM users WHERE phoneNumber = ?';
     try {
-      const authCommand = new QueryCommand(params);
-      const { Items: queryItems } = await ddbClient.send(authCommand);
-      if (!queryItems[0]) {
-        return { success: false, message: "User not found" };
-      }
-      const user = unmarshall(queryItems[0]);
-
-      return { success: true, ...user };
+      const [results] = await connection.query(query, [phoneNumber]);
+      return results.length ? { success: true, ...results[0] } : { success: false, message: "User not found" };
     } catch (err) {
-      console.error("Error fetching user from DynamoDB:", err);
-      return { success: false, error: "Error fetching user" };
+      return { success: false, message: err.message || 'Error fetching user' };
     }
   }
 
   static async updateUser(userId, updatedFields) {
-    const updateExpressions = [];
-    const attributeValues = {};
-
-    for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`${key} = :${key}`);
-      attributeValues[`:${key}`] = { S: value };
-    }
-
-    const params = {
-      TableName: process.env.USERS_TABLE,
-      Key: {
-        userId: { S: userId },
-      },
-      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-      ExpressionAttributeValues: attributeValues,
-      ReturnValues: "ALL_NEW",
-    };
-
+    const updateFields = Object.keys(updatedFields).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updatedFields), userId];
+    const query = `UPDATE users SET ${updateFields} WHERE user_id = ?`;
     try {
-      const command = new UpdateItemCommand(params);
-      const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: Attributes };
+      const [results] = await connection.query(query, values);
+      return results.affectedRows ? { success: true, message: 'User updated successfully' } : { success: false, message: 'User not found' };
     } catch (err) {
-      console.error("Error updating user in DynamoDB:", err);
-      return { success: false, message: "Error updating user" };
+      return { success: false, message: err.message || 'Error updating user' };
     }
   }
 
-  static async deleteUser(email) {
-    const authParams = {
-      TableName: process.env.AUTH_TABLE,
-      Key: marshall({ email }),
-    };
-
-    const userDataParams = {
-      TableName: process.env.USER_DATA_TABLE,
-      Key: marshall({ email }),
-    };
-
-    const userDocsParams = {
-      TableName: process.env.USER_DOCS_TABLE,
-      Key: marshall({ email }),
-    };
-
+  static async deleteUser(userId) {
+    const query = 'DELETE FROM users WHERE user_id = ?';
     try {
-      const authCommand = new DeleteItemCommand(authParams);
-      const userDataCommand = new DeleteItemCommand(userDataParams);
-      const userDocsCommand = new DeleteItemCommand(userDocsParams);
-      await ddbClient.send(authCommand);
-      await ddbClient.send(userDataCommand);
-      await ddbClient.send(userDocsCommand);
-      return { success: true, message: "User deleted successfully" };
+      const [results] = await connection.query(query, [userId]);
+      return results.affectedRows ? { success: true, message: "User deleted successfully" } : { success: false, message: 'User not found' };
     } catch (err) {
-      console.error("Error deleting user from DynamoDB:", err);
-      return { success: false, message: "Error deleting user" };
+      return { success: false, message: err.message || 'Error deleting user' };
     }
   }
 
   static async updatePassword(email, newPassword) {
-    const params = {
-      TableName: process.env.AUTH_TABLE,
-      Key: marshall({ email }),
-      UpdateExpression: "SET password = :password",
-      ExpressionAttributeValues: marshall({
-        ":password": newPassword,
-      }),
-      ReturnValues: "ALL_NEW",
-    };
-
+    const query = 'UPDATE users SET password = ? WHERE email = ?';
     try {
-      const command = new UpdateItemCommand(params);
-      const { Attributes } = await ddbClient.send(command);
-      return { success: true, data: Attributes };
+      const [results] = await connection.query(query, [newPassword, email]);
+      return results.affectedRows ? { success: true, message: "Password updated successfully" } : { success: false, message: 'User not found' };
     } catch (err) {
-      console.error("Error updating password in DynamoDB:", err);
-      return { success: false, message: "Error updating password" };
-    }
-  }
-
-  static async getDataFromTable(tableName, key) {
-    const params = {
-      TableName: tableName,
-      Key: marshall(key),
-    };
-
-    try {
-      const command = new GetItemCommand(params);
-      const result = await ddbClient.send(command);
-
-      if (!result.Item) {
-        throw new Error(`No data found for key: ${JSON.stringify(key)}`);
-      }
-
-      const item = unmarshall(result.Item);
-      return item;
-    } catch (error) {
-      console.error(`Error fetching data from ${tableName}:`, error);
-      throw error;
+      return { success: false, message: err.message || 'Error updating password' };
     }
   }
 
   static async getUserDataByEmail(email) {
+    const query = 'SELECT * FROM users WHERE email = ?';
     try {
-      const authData = await this.getDataFromTable(process.env.AUTH_TABLE, {
-        email,
-      });
-      return { authData };
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-      throw new Error("Error fetching user details");
+      const [results] = await connection.query(query, [email]);
+      return results.length ? { authData: results[0] } : { success: false, message: "User not found" };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching user details' };
     }
   }
 }

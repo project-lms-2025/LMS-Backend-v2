@@ -1,105 +1,58 @@
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import ddbClient from "../../config/dynamoDB.js";
-import {
-  PutItemCommand,
-  GetItemCommand,
-  UpdateItemCommand,
-  DeleteItemCommand,
-  ScanCommand,
-} from "@aws-sdk/client-dynamodb";
+import connection from "../../config/database.js"; 
+import { promisify } from 'util'; 
+const query = promisify(connection.query).bind(connection);
 
 class ResultModel {
-  static async createResult(result) {
-    const params = {
-      TableName: process.env.RESULTS_TABLE,
-      Item: marshall(result),
-    };
-
+  static async createResult({ result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count }) {
+    const queryStr = `
+      INSERT INTO results (result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
     try {
-      const command = new PutItemCommand(params);
-      await ddbClient.send(command);
-      return result;
+      await query(queryStr, [result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count]);
+      return { result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count };
     } catch (err) {
-      console.error("Error creating result:", err);
       throw new Error("Error creating result");
     }
   }
 
   static async getResultById(result_id) {
-    const params = {
-      TableName: process.env.RESULTS_TABLE,
-      Key: marshall({ result_id }),
-    };
-
+    const queryStr = "SELECT * FROM results WHERE result_id = ?";
     try {
-      const command = new GetItemCommand(params);
-      const { Item } = await ddbClient.send(command);
-      if (!Item) {
-        return null;
-      }
-      return unmarshall(Item);
+      const [rows] = await query(queryStr, [result_id]);
+      return rows[0] || null;
     } catch (err) {
-      console.error("Error getting result by ID:", err);
       throw new Error("Error getting result by ID");
     }
   }
 
   static async getResultsByTestId(test_id) {
-    const params = {
-      TableName: process.env.RESULTS_TABLE,
-      FilterExpression: "test_id = :test_id",
-      ExpressionAttributeValues: marshall({ ":test_id": test_id }),
-    };
-
+    const queryStr = "SELECT * FROM results WHERE test_id = ?";
     try {
-      const command = new ScanCommand(params);
-      const { Items } = await ddbClient.send(command);
-      return Items ? Items.map((item) => unmarshall(item)) : [];
+      const [rows] = await query(queryStr, [test_id]);
+      return rows;
     } catch (err) {
-      console.error("Error getting results by test ID:", err);
       throw new Error("Error getting results by test ID");
     }
   }
 
   static async updateResult(result_id, updatedFields) {
-    const updateExpressions = [];
-    const attributeValues = {};
-
-    for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`${key} = :${key}`);
-      attributeValues[`:${key}`] = marshall({ [key]: value })[key];
-    }
-
-    const params = {
-      TableName: process.env.RESULTS_TABLE,
-      Key: marshall({ result_id }),
-      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-      ExpressionAttributeValues: attributeValues,
-      ReturnValues: "ALL_NEW",
-    };
-
+    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
+    const queryStr = `UPDATE results SET ${updates} WHERE result_id = ?`;
     try {
-      const command = new UpdateItemCommand(params);
-      const { Attributes } = await ddbClient.send(command);
-      return unmarshall(Attributes);
+      await query(queryStr, [...Object.values(updatedFields), result_id]);
+      return { result_id, ...updatedFields };
     } catch (err) {
-      console.error("Error updating result:", err);
       throw new Error("Error updating result");
     }
   }
 
   static async deleteResult(result_id) {
-    const params = {
-      TableName: process.env.RESULTS_TABLE,
-      Key: marshall({ result_id }),
-    };
-
+    const queryStr = "DELETE FROM results WHERE result_id = ?";
     try {
-      const command = new DeleteItemCommand(params);
-      await ddbClient.send(command);
+      await query(queryStr, [result_id]);
       return { success: true };
     } catch (err) {
-      console.error("Error deleting result:", err);
       throw new Error("Error deleting result");
     }
   }

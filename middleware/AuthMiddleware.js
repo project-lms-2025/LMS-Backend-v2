@@ -13,7 +13,8 @@ class AuthMiddleware {
         decoded.deviceType
       );
 
-      if (!session || session.token !== token) {
+
+      if (!session.data || session.data.token !== token) {
         return res.status(401).json({success: false, message: "Unauthorised"})
       }
 

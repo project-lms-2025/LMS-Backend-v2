@@ -1,107 +1,55 @@
-import ddbClient from "../config/dynamoDB.js";
-import {
-  PutItemCommand,
-  GetItemCommand,
-  UpdateItemCommand,
-  DeleteItemCommand,
-  QueryCommand,
-  ScanCommand
-} from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import connection from "../config/database.js";
 
 class BatchModel {
   static async createBatch(batch) {
-    const params = {
-      TableName: process.env.BATCH_TABLE,
-      Item: marshall(batch),
-    };
-
+    const query = 'INSERT INTO batches (batch_id, batch_name, start_date, end_date) VALUES (?, ?, ?, ?)';
     try {
-      const command = new PutItemCommand(params);
-      const data = await ddbClient.send(command);
-      return batch;
-    } catch (error) {
-      console.error("Error creating batch:", error);
-      throw error;
+      await connection.query(query, [batch.batch_id, batch.batch_name, batch.start_date, batch.end_date]);
+      return { success: true, message: 'Batch created successfully', data: batch };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error creating batch' };
     }
   }
 
   static async getBatchById(batch_id) {
-    const params = {
-      TableName: process.env.BATCH_TABLE,
-      Key: marshall({ batch_id }),
-    };
-
+    const query = 'SELECT * FROM batches WHERE batch_id = ?';
     try {
-      const command = new GetItemCommand(params);
-      const data = await ddbClient.send(command);
-      return data.Item ? unmarshall(data.Item) : null;
-    } catch (error) {
-      console.error("Error getting batch:", error);
-      throw error;
+      const [results] = await connection.query(query, [batch_id]);
+      return results.length ? { success: true, data: results[0] } : { success: false, message: 'Batch not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching batch' };
     }
   }
 
   static async getAllBatches() {
-    const params = {
-      TableName: process.env.BATCH_TABLE,
-    };
+    const query = 'SELECT * FROM batches';
     try {
-      const command = new ScanCommand(params);
-      const data = await ddbClient.send(command);
-      return data.Items.map((item) => unmarshall(item));
-    } catch (error) {
-      console.error("Error getting all batches:", error);
-      throw error;
+      const [results] = await connection.query(query);
+      return { success: true, data: results };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching batches' };
     }
   }
 
   static async updateBatch(batch_id, updatedBatchData) {
-    const existingBatch = await this.getBatchById(batch_id);
-    if (!existingBatch) {
-      throw new Error("Batch not found");
-    }
-
-    const updateParams = {
-      TableName: process.env.BATCH_TABLE,
-      Key: marshall({ batch_id }),
-      UpdateExpression: "SET ",
-      ExpressionAttributeValues: marshall({}),
-      ReturnValues: "ALL_NEW",
-    };
-
-    for (const key in updatedBatchData) {
-      if (updatedBatchData.hasOwnProperty(key)) {
-        updateParams.UpdateExpression += `${key} = :${key}, `;
-        updateParams.ExpressionAttributeValues[`:${key}`] = marshall({ [key]: updatedBatchData[key] })[key];
-      }
-    }
-
-    updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -2);
-
+    const updateFields = Object.keys(updatedBatchData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updatedBatchData), batch_id];
+    const query = `UPDATE batches SET ${updateFields} WHERE batch_id = ?`;
     try {
-      const command = new UpdateItemCommand(updateParams);
-      const data = await ddbClient.send(command);
-      return unmarshall(data.Attributes);
-    } catch (error) {
-      console.error("Error updating batch:", error);
-      throw error;
+      const [results] = await connection.query(query, values);
+      return results.affectedRows ? { success: true, message: 'Batch updated successfully', updatedBatchData } : { success: false, message: 'Batch not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error updating batch' };
     }
   }
 
   static async deleteBatch(batch_id) {
-    const params = {
-      TableName: process.env.BATCH_TABLE,
-      Key: marshall({ batch_id }),
-    };
-
+    const query = 'DELETE FROM batches WHERE batch_id = ?';
     try {
-      const command = new DeleteItemCommand(params);
-      const data = await ddbClient.send(command);
-      return data;
-    } catch (error) {
-      console.error("Error deleting batch:", error);
-      throw error;
+      const [results] = await connection.query(query, [batch_id]);
+      return results.affectedRows ? { success: true, message: 'Batch deleted successfully' } : { success: false, message: 'Batch not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error deleting batch' };
     }
   }
 }

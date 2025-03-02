@@ -11,25 +11,19 @@ class AuthService {
       name,
       email,
       phoneNumber,
-      exam_registered_for,
-      is_email_verified,
     } = userData;
-  
     try {
       const existingUser = await UserModel.getUserByEmail(email);
       if (existingUser.success) {
         return { success: false, statusCode: 400, message: "User already exists" };
       }
-  
-      await UserModel.createUser({
+      const resp = await UserModel.createUser({
         name,
         email,
         phoneNumber,
         role:"student",
-        exam_registered_for,
-        is_email_verified,
-        created_at: Date.now(),
       });
+
   
       return { success: true, statusCode: 201, message: "User registered successfully" };
     } catch (error) {

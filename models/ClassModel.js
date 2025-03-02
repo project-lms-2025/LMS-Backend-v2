@@ -1,122 +1,68 @@
-import { PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand, ScanCommand } from "@aws-sdk/client-dynamodb";
-import ddbClient from "../config/dynamoDB.js";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-
+import connection from "../config/database.js";
 
 class ClassModel {
-    static async createClass(cls) { 
-        const params = {
-            TableName: process.env.CLASS_TABLE,
-            Item: marshall(cls),
-        };
-
-        try {
-            const command = new PutItemCommand(params);
-            const data = await ddbClient.send(command);
-            return cls;
-        } catch (error) {
-            console.error("Error creating class:", error);
-            throw error;
-        }
+  static async createClass(cls) {
+    const { class_id, course_id, teacher_id, class_title, class_date_time, recording_url } = cls;
+    const query = 'INSERT INTO classes (class_id, course_id, teacher_id, class_title, class_date_time, recording_url) VALUES (?, ?, ?, ?, ?, ?)';
+    try {
+      await connection.query(query, [class_id, course_id, teacher_id, class_title, class_date_time, recording_url]);
+      return { success: true, message: 'Class created successfully', data: cls };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error creating class' };
     }
+  }
 
-    static async getClassById(class_id) {
-        const params = {
-            TableName: process.env.CLASS_TABLE,
-            Key: marshall({ class_id }),
-        };
-
-        try {
-            const command = new GetItemCommand(params);
-            const data = await ddbClient.send(command);
-            return data.Item ? unmarshall(data.Item) : null;
-        } catch (error) {
-            console.error("Error getting class:", error);
-            throw error;
-        }
+  static async getClassById(class_id) {
+    const query = 'SELECT * FROM classes WHERE class_id = ?';
+    try {
+      const [results] = await connection.query(query, [class_id]);
+      return results.length ? { success: true, data: results[0] } : { success: false, message: 'Class not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching class' };
     }
+  }
 
-    static async getClassesByCourseId(course_id) {
-        const params = {
-            TableName: process.env.CLASS_TABLE,
-            IndexName: 'course_id-index', // Assuming you have a GSI on course_id
-            KeyConditionExpression: "course_id = :course_id",
-            ExpressionAttributeValues: marshall({ ":course_id": course_id }),
-        };
-
-        try {
-            const command = new QueryCommand(params);
-            const data = await ddbClient.send(command);
-            return data.Items.map(item => unmarshall(item));
-        } catch (error) {
-            console.error("Error getting classes by course ID:", error);
-            throw error;
-        }
+  static async getClassesByCourseId(course_id) {
+    const query = 'SELECT * FROM classes WHERE course_id = ?';
+    try {
+      const [results] = await connection.query(query, [course_id]);
+      return { success: true, data: results };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching classes by course' };
     }
+  }
 
-    static async getAllClasses() {
-        const params = {
-            TableName: process.env.CLASS_TABLE,
-        };
-
-        try {
-            const command = new ScanCommand(params);
-            const data = await ddbClient.send(command);
-            return data.Items ? data.Items.map(item => unmarshall(item)) : [];
-        } catch (error) {
-            console.error("Error getting all classes:", error);
-            throw error;
-        }
+  static async getAllClasses() {
+    const query = 'SELECT * FROM classes';
+    try {
+      const [results] = await connection.query(query);
+      return { success: true, data: results };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching all classes' };
     }
+  }
 
-    static async updateClass(class_id, updatedClassData) {
-        const existingClass = await this.getClassById(class_id);
-        if (!existingClass) {
-            throw new Error('Class not found');
-        }
-
-        const updateParams = {
-            TableName: process.env.CLASS_TABLE,
-            Key: marshall({ class_id }),
-            UpdateExpression: "SET ",
-            ExpressionAttributeValues: marshall({}),
-            ReturnValues: "ALL_NEW"
-        };
-
-        for (const key in updatedClassData) {
-            if (updatedClassData.hasOwnProperty(key)) {
-                updateParams.UpdateExpression += `${key} = :${key}, `;
-                updateParams.ExpressionAttributeValues[`:${key}`] = marshall({ [key]: updatedClassData[key] })[key];
-            }
-        }
-
-        updateParams.UpdateExpression = updateParams.UpdateExpression.slice(0, -2);
-
-        try {
-            const command = new UpdateItemCommand(updateParams);
-            const data = await ddbClient.send(command);
-            return unmarshall(data.Attributes);
-        } catch (error) {
-            console.error("Error updating class:", error);
-            throw error;
-        }
+  static async updateClass(class_id, updatedClassData) {
+    const updateFields = Object.keys(updatedClassData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updatedClassData), class_id];
+    const query = `UPDATE classes SET ${updateFields} WHERE class_id = ?`;
+    try {
+      const [results] = await connection.query(query, values);
+      return results.affectedRows ? { success: true, message: 'Class updated successfully', updatedClassData } : { success: false, message: 'Class not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error updating class' };
     }
+  }
 
-    static async deleteClass(class_id) {
-        const params = {
-            TableName: process.env.CLASS_TABLE,
-            Key: marshall({ class_id }),
-        };
-
-        try {
-            const command = new DeleteItemCommand(params);
-            const data = await ddbClient.send(command);
-            return data;
-        } catch (error) {
-            console.error("Error deleting class:", error);
-            throw error;
-        }
+  static async deleteClass(class_id) {
+    const query = 'DELETE FROM classes WHERE class_id = ?';
+    try {
+      const [results] = await connection.query(query, [class_id]);
+      return results.affectedRows ? { success: true, message: 'Class deleted successfully' } : { success: false, message: 'Class not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error deleting class' };
     }
+  }
 }
 
 export default ClassModel;

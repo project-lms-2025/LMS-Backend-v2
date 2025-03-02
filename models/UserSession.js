@@ -1,44 +1,45 @@
-import { DynamoDBClient, PutItemCommand, GetItemCommand, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
-import  { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-
-const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+import connection from '../config/database.js';
+import { generateUniqueId } from "../utils/idGenerator.js";
 
 class UserSession {
   static async createOrUpdateSession(email, deviceType, token) {
-    const params = {
-      TableName: process.env.SESSIONS_TABLE,
-      Item: marshall({
-        email,
-        deviceType,
-        token,
-        createdAt: Date.now(),
-      }),
-    };
-    await client.send(new PutItemCommand(params));
+    const sessionId = generateUniqueId();
+    const createdAt = Date.now();
+    const query = `
+      INSERT INTO user_sessions (session_id, email, device_type, token)
+      VALUES (?, ?, ?, ?) 
+      ON DUPLICATE KEY UPDATE token = ?, created_at = ?;
+    `;
+    try {
+      await connection.query(query, [sessionId, email, deviceType, token, createdAt, token, createdAt]);
+      return { success: true, message: 'Session created or updated successfully' };
+    } catch (err) {
+      console.error("DB error: ", err)
+      return { success: false, message: err.message || 'Error creating/updating session' };
+    }
   }
 
   static async getSessionByUserAndDevice(email, deviceType) {
-    const params = {
-      TableName: process.env.SESSIONS_TABLE,
-      Key: marshall({
-        email,
-        deviceType,
-      }),
-    };
-    const result = await client.send(new GetItemCommand(params));
-    return result.Item ? unmarshall(result.Item) : null;
+    const query = 'SELECT * FROM user_sessions WHERE email = ? AND device_type = ?';
+    try {
+      const [results] = await connection.query(query, [email, deviceType]);
+      return results.length ? { success: true, data: results[0] } : { success: false, message: 'Session not found' };
+    } catch (err) {
+      console.error("DB error: ", err)
+      return { success: false, message: err.message || 'Error fetching session' };
+    }
   }
 
   static async deleteSession(email, deviceType) {
-    const params = {
-      TableName: process.env.SESSIONS_TABLE,
-      Key: marshall({
-        email,
-        deviceType,
-      }),
-    };
-    await client.send(new DeleteItemCommand(params));
+    const query = 'DELETE FROM user_sessions WHERE email = ? AND device_type = ?';
+    try {
+      const [results] = await connection.query(query, [email, deviceType]);
+      return results.affectedRows ? { success: true, message: 'Session deleted successfully' } : { success: false, message: 'Session not found' };
+    } catch (err) {
+      console.error("DB error: ", err)
+      return { success: false, message: err.message || 'Error deleting session' };
+    }
   }
 }
 
-export default  UserSession;
+export default UserSession;

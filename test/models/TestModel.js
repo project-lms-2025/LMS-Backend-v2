@@ -1,97 +1,58 @@
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { PutItemCommand, GetItemCommand, ScanCommand, UpdateItemCommand, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
-import ddbClient from "../../config/dynamoDB.js";
+import connection from "../../config/database.js"; 
+import { promisify } from 'util'; 
+const query = promisify(connection.query).bind(connection);
 
 class TestModel {
-  static async createTest(test) {
-    const params = {
-      TableName: process.env.TESTS_TABLE,
-      Item: marshall(test),
-    };
-
+  static async createTest({ test_id, teacher_id, course_id, title, description, scheduled_date_time, time_duration }) {
+    const queryStr = `
+      INSERT INTO tests (test_id, teacher_id, course_id, title, description, scheduled_date_time, time_duration)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
     try {
-      const command = new PutItemCommand(params);
-      await ddbClient.send(command);
-      return test;
+      await query(queryStr, [test_id, teacher_id, course_id, title, description, scheduled_date_time, time_duration]);
+      return { test_id, teacher_id, course_id, title, description, scheduled_date_time, time_duration };
     } catch (err) {
-      console.error("Error creating test:", err);
       throw new Error("Error creating test");
     }
   }
 
   static async getTestById(test_id) {
-    const params = {
-      TableName: process.env.TESTS_TABLE,
-      Key: marshall({ test_id }),
-    };
-
+    const queryStr = "SELECT * FROM tests WHERE test_id = ?";
     try {
-      const command = new GetItemCommand(params);
-      const { Item } = await ddbClient.send(command);
-      if (!Item) {
-        return null;
-      }
-      return unmarshall(Item);
+      const [rows] = await query(queryStr, [test_id]);
+      return rows[0] || null;
     } catch (err) {
-      console.error("Error getting test by ID:", err);
       throw new Error("Error getting test by ID");
     }
   }
 
   static async getAllTests() {
-    const params = {
-      TableName: process.env.TESTS_TABLE,
-    };
-
+    const queryStr = "SELECT * FROM tests";
     try {
-      const command = new ScanCommand(params);
-      const { Items } = await ddbClient.send(command);
-      return Items ? Items.map((item) => unmarshall(item)) : [];
+      const [rows] = await query(queryStr);
+      return rows;
     } catch (err) {
-      console.error("Error getting all tests:", err);
       throw new Error("Error getting all tests");
     }
   }
 
   static async updateTest(test_id, updatedFields) {
-    const updateExpressions = [];
-    const attributeValues = {};
-
-    for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`${key} = :${key}`);
-      attributeValues[`:${key}`] = marshall({ [key]: value })[key];
-    }
-
-    const params = {
-      TableName: process.env.TESTS_TABLE,
-      Key: marshall({ test_id }),
-      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-      ExpressionAttributeValues: attributeValues,
-      ReturnValues: "ALL_NEW",
-    };
-
+    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
+    const queryStr = `UPDATE tests SET ${updates} WHERE test_id = ?`;
     try {
-      const command = new UpdateItemCommand(params);
-      const { Attributes } = await ddbClient.send(command);
-      return unmarshall(Attributes);
+      await query(queryStr, [...Object.values(updatedFields), test_id]);
+      return { test_id, ...updatedFields };
     } catch (err) {
-      console.error("Error updating test:", err);
       throw new Error("Error updating test");
     }
   }
 
   static async deleteTest(test_id) {
-    const params = {
-      TableName: process.env.TESTS_TABLE,
-      Key: marshall({ test_id }),
-    };
-
+    const queryStr = "DELETE FROM tests WHERE test_id = ?";
     try {
-      const command = new DeleteItemCommand(params);
-      await ddbClient.send(command);
+      await query(queryStr, [test_id]);
       return { success: true };
     } catch (err) {
-      console.error("Error deleting test:", err);
       throw new Error("Error deleting test");
     }
   }

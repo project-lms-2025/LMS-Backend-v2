@@ -1,84 +1,51 @@
-import { BatchWriteItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import ddbClient from "../config/dynamoDB.js";
-import dotenv from 'dotenv';
-
-
-dotenv.config();
-
+import connection from "../config/database.js";
+import { generateUniqueId } from "../utils/idGenerator.js";
 
 class UserAssignmentModel {
-  static async assignUser(tableName, item) {
-    const params = {
-      TableName: tableName,
-      Item: marshall(item)
-    };
-
+  static async assignUser(tableName, { user_id, course_id, batch_id, role }) {
+    const query = `
+      INSERT INTO ${tableName} (user_id, course_id, batch_id, role) 
+      VALUES (?, ?, ?, ?)
+    `;
     try {
-      await ddbClient.send(new BatchWriteItemCommand({ RequestItems: { [tableName]: [params] } }));
-      console.log(`Item inserted into table ${tableName}:`, item);
-    } catch (error) {
-      console.error('Error inserting single item:', error);
+      await connection.query(query, [user_id, course_id, batch_id, role]);
+      return { success: true, message: 'User assigned successfully' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error assigning user' };
     }
   }
 
   static async assignBatchUsers(tableName, items) {
-    const params = {
-      RequestItems: {
-        [tableName]: items.map(item => ({
-          PutRequest: {
-            Item: marshall(item)
-          }
-        }))
-      }
-    };
-
+    const query = `
+      INSERT INTO ${tableName} (user_id, course_id, batch_id, role) 
+      VALUES ?
+    `;
+    const values = items.map(item => [item.user_id, item.course_id, item.batch_id, item.role]);
     try {
-      await ddbClient.send(new BatchWriteItemCommand(params));
-      console.log(`Batch insert into table ${tableName}:`, items);
-    } catch (error) {
-      console.error('Error inserting batch items:', error);
+      await connection.query(query, [values]);
+      return { success: true, message: 'Batch users assigned successfully' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error assigning batch users' };
     }
   }
 
   static async getItem(tableName, key) {
-    const params = {
-      TableName: tableName,
-      Key: marshall(key)
-    };
-
+    const query = `SELECT * FROM ${tableName} WHERE user_id = ?`;
     try {
-      const { Item } = await ddbClient.send(new GetItemCommand(params));
-      if (Item) {
-        console.log('Item retrieved:', unmarshall(Item));
-        return unmarshall(Item);
-      } else {
-        console.log('Item not found');
-        return null;
-      }
-    } catch (error) {
-      console.error('Error getting item:', error);
+      const [results] = await connection.query(query, [key]);
+      return results.length ? { success: true, data: results[0] } : { success: false, message: 'Item not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching item' };
     }
   }
 
-  static async getItemByUserId(tableName, key) {
-    const params = {
-      TableName: tableName,
-      KeyConditionExpression: "#user_id = :user_id",
-      ExpressionAttributeNames: {
-        "#user_id": "user_id"
-      },
-      ExpressionAttributeValues: {
-        ":user_id": { S: key }
-      }
-    };
-
+  static async getItemByUserId(tableName, user_id) {
+    const query = `SELECT * FROM ${tableName} WHERE user_id = ?`;
     try {
-      const { Items } = await ddbClient.send(new QueryCommand(params));
-      return Items ? Items.map(item => unmarshall(item)) : [];
-    } catch (error) {
-      console.error('Error querying items:', error);
-      return [];
+      const [results] = await connection.query(query, [user_id]);
+      return results.length ? { success: true, data: results } : { success: false, message: 'Item not found' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Error fetching items' };
     }
   }
 }

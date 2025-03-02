@@ -1,109 +1,58 @@
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import ddbClient from "../../config/dynamoDB.js";
-import {
-  PutItemCommand,
-  GetItemCommand,
-  UpdateItemCommand,
-  DeleteItemCommand,
-  ScanCommand,
-  QueryCommand,
-} from "@aws-sdk/client-dynamodb";
+import connection from "../../config/database.js"; 
+import { promisify } from 'util'; 
+const query = promisify(connection.query).bind(connection);
 
 class QuestionModel {
-  static async createQuestion(question) {
-    const params = {
-      TableName: process.env.QUESTIONS_TABLE,
-      Item: marshall(question),
-    };
-
+  static async createQuestion({ question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks }) {
+    const queryStr = `
+      INSERT INTO questions (question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
     try {
-      const command = new PutItemCommand(params);
-      await ddbClient.send(command);
-      return question;
+      await query(queryStr, [question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks]);
+      return { question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks };
     } catch (err) {
-      console.error("Error creating question:", err);
       throw new Error("Error creating question");
     }
   }
 
   static async getQuestionById(question_id) {
-    const params = {
-      TableName: process.env.QUESTIONS_TABLE,
-      Key: marshall({ question_id }),
-    };
-
+    const queryStr = "SELECT * FROM questions WHERE question_id = ?";
     try {
-      const command = new GetItemCommand(params);
-      const { Item } = await ddbClient.send(command);
-      if (!Item) {
-        return null;
-      }
-      return unmarshall(Item);
+      const [rows] = await query(queryStr, [question_id]);
+      return rows.length ? rows[0] : null;
     } catch (err) {
-      console.error("Error getting question by ID:", err);
       throw new Error("Error getting question by ID");
     }
   }
 
   static async getQuestionsByTestId(test_id) {
-    const params = {
-        TableName: process.env.QUESTIONS_TABLE,
-        IndexName: "test_id-index",
-        KeyConditionExpression: "test_id = :test_id",
-        ExpressionAttributeValues: marshall({
-            ":test_id": test_id,
-        }),
-    };
-
+    const queryStr = "SELECT * FROM questions WHERE test_id = ?";
     try {
-        const command = new QueryCommand(params);
-        const { Items } = await ddbClient.send(command);
-        return Items ? Items.map((item) => unmarshall(item)) : [];
+      const [rows] = await query(queryStr, [test_id]);
+      return rows;
     } catch (err) {
-        console.error("Error getting questions by test ID:", err);
-        throw new Error("Error getting questions by test ID");
+      throw new Error("Error getting questions by test ID");
     }
-}
+  }
 
   static async updateQuestion(question_id, updatedFields) {
-    const updateExpressions = [];
-    const attributeValues = {};
-
-    for (const [key, value] of Object.entries(updatedFields)) {
-      updateExpressions.push(`${key} = :${key}`);
-      attributeValues[`:${key}`] = marshall({ [key]: value })[key];
-    }
-
-    const params = {
-      TableName: process.env.QUESTIONS_TABLE,
-      Key: marshall({ question_id }),
-      UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-      ExpressionAttributeValues: attributeValues,
-      ReturnValues: "ALL_NEW",
-    };
-
+    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`);
+    const queryStr = `UPDATE questions SET ${updates.join(', ')} WHERE question_id = ?`;
     try {
-      const command = new UpdateItemCommand(params);
-      const { Attributes } = await ddbClient.send(command);
-      return unmarshall(Attributes);
+      await query(queryStr, [...Object.values(updatedFields), question_id]);
+      return { question_id, ...updatedFields };
     } catch (err) {
-      console.error("Error updating question:", err);
       throw new Error("Error updating question");
     }
   }
 
   static async deleteQuestion(question_id) {
-    const params = {
-      TableName: process.env.QUESTIONS_TABLE,
-      Key: marshall({ question_id }),
-    };
-
+    const queryStr = "DELETE FROM questions WHERE question_id = ?";
     try {
-      const command = new DeleteItemCommand(params);
-      await ddbClient.send(command);
+      await query(queryStr, [question_id]);
       return { success: true };
     } catch (err) {
-      console.error("Error deleting question:", err);
       throw new Error("Error deleting question");
     }
   }
