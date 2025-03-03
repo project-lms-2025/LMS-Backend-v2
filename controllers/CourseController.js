@@ -4,9 +4,9 @@ class CourseController {
     static async createCourse(req, res) {
         try {
             const { batch_id, course_name, allow_notes_download } = req.body;
-            const teacher_email = req.email;
+            const teacher_id = req.user_id;
 
-            const newCourse = await CourseService.createCourse(teacher_email, batch_id, course_name, allow_notes_download);
+            const newCourse = await CourseService.createCourse(teacher_id, batch_id, course_name, allow_notes_download);
             res.status(201).json(newCourse);
         } catch (error) {
             console.error(error);

@@ -17,7 +17,7 @@ class AuthMiddleware {
       if (!session.data || session.data.token !== token) {
         return res.status(401).json({success: false, message: "Unauthorised"})
       }
-
+      req.user_id = decoded.user_id;
       req.email = decoded.email;
       req.deviceType = decoded.deviceType;
       next();
