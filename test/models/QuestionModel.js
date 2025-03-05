@@ -1,5 +1,5 @@
 import connection from "../../config/database.js"; 
-import { promisify } from 'util'; 
+import { promisify } from 'util';
 
 class QuestionModel {
   static async createQuestion({ question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks, section }) {

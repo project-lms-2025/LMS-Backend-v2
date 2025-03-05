@@ -15,7 +15,7 @@ const s3 = new S3Client({
 const generatePresignedUrl = async (fileName, fileType) => {
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
-    Key: `questions/${Date.now()}_${fileName}`,
+    Key: fileName,
     ContentType: fileType,
   };
 
