@@ -45,16 +45,16 @@ class TestController {
     const examData = req.body;
 
     try {
-      const { title, id, course_id, description, duration, scheduleDate, scheduleTime, totalMarks, questions } = examData;
+      const { title, test_id, course_id, description, duration, schedule_date, schedule_time, totalMarks, questions } = examData;
 
       const test = await TestModel.createTest({
-        test_id: id,
+        test_id,
         teacher_id: req.user_id,
         course_id,
         title,
         description,
-        schedule_date: scheduleDate,
-        schedule_time: scheduleTime,
+        schedule_date,
+        schedule_time,
         duration,
         totalMarks
       });
@@ -62,10 +62,10 @@ class TestController {
       console.log("test created successfully")
 
       for (let questionData of questions) {
-        const { id: question_id, section, question_text, question_type, positive_marks, negative_marks, options } = questionData;
+        const { question_id, section, question_text, question_type, positive_marks, negative_marks, options } = questionData;
         const question = await QuestionModel.createQuestion({
           question_id,
-          test_id: id,
+          test_id,
           question_type,
           question_text,
           positive_marks,
@@ -74,11 +74,11 @@ class TestController {
         });
 
         for (let optionData of options) {
-          const { id: optionId, option_text, image_url, is_correct } = optionData;
+          const { option_id, option_text, image_url, is_correct } = optionData;
 
           await OptionModel.createOption({
-            option_id: optionId,
-            question_id: question_id,
+            option_id,
+            question_id,
             option_text,
             image_url,
             is_correct
