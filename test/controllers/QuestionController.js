@@ -28,15 +28,9 @@ class QuestionController {
   }
 
   static async createQuestion(req, res) {
-    const { test_id } = req.params;
     const questionData = req.body;
-    questionData.question_id = generateUniqueId();
-    questionData.test_id = test_id;
 
     try {
-      if (req.body.picture_url) {
-        questionData.picture_url = req.body.picture_url; // The URL will be passed from the frontend
-      }
 
       await QuestionModel.createQuestion(questionData);
       res.status(201).json({ message: 'Question created successfully' });

@@ -8,5 +8,6 @@ router.get('/tests/:test_id', TestController.getTestById);
 router.post('/tests', TestController.createTest);
 router.put('/tests/:test_id', TestController.updateTest);
 router.delete('/tests/:test_id', TestController.deleteTest);
+router.post('/:test_id/submit', TestController.submitTest);
 
 export default router;

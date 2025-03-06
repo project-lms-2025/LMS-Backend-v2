@@ -1,6 +1,7 @@
 import TestModel from '../models/TestModel.js';
 import QuestionModel from '../models/QuestionModel.js'
 import OptionModel from '../models/OptionModel.js'
+import StudentResponseModel from '../models/StudentResponseModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
@@ -62,12 +63,13 @@ class TestController {
       console.log("test created successfully")
 
       for (let questionData of questions) {
-        const { question_id, section, question_text, question_type, positive_marks, negative_marks, options } = questionData;
+        const { question_id, section, question_text, question_type,image_url, positive_marks, negative_marks, options } = questionData;
         const question = await QuestionModel.createQuestion({
           question_id,
           test_id,
           question_type,
           question_text,
+          image_url,
           positive_marks,
           negative_marks,
           section,
@@ -134,6 +136,25 @@ class TestController {
       res.status(500).json({ error: 'Failed to delete the test' });
     }
   }
+
+  static async submitTest(req, res) {
+    const { test_id } = req.params;
+    const { responses } = req.body;
+  
+    try {
+      if (!responses || !Array.isArray(responses)) {
+        return res.status(400).json({ error: 'Responses must be an array.' });
+      }
+      await StudentResponseModel.insertResponses({ test_id, responses });
+      res.status(200).json({
+        message: 'Test responses submitted successfully',
+        test_id,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to submit test responses' });
+    }
+  }  
 }
 
 export default TestController;
