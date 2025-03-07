@@ -16,7 +16,7 @@ class TestModel {
     }
   }
 
-  static async getTestById(test_id) {
+  static async getTestById(test_id, role) {
     const queryStr = `
       SELECT tests.*, 
        questions.*, 
@@ -52,6 +52,8 @@ class TestModel {
             question_id: row.question_id,
             question_text: row.question_text,
             image_url: row.question_image_url,
+            question_type: row.question_type,
+            section: row.section,
             options: []
           };
           testData.questions.push(question);
@@ -61,10 +63,10 @@ class TestModel {
           question.options.push({
             option_id: row.option_id,
             option_text: row.option_text,
-            image_url: row.option_image_url
-            // is_correct: row.is_correct
+            image_url: row.option_image_url,
+            ...(role !== 'student' ? { is_correct: row.is_correct } : {})
           });
-        }
+        }        
       });
       return testData.questions.length > 0 ? testData : null;
     } catch (err) {

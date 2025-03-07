@@ -2,6 +2,7 @@ import TestModel from '../models/TestModel.js';
 import QuestionModel from '../models/QuestionModel.js'
 import OptionModel from '../models/OptionModel.js'
 import StudentResponseModel from '../models/StudentResponseModel.js';
+import ResultModel from '../models/ResultModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
@@ -18,7 +19,7 @@ class TestController {
   static async getTestById(req, res) {
     const { test_id } = req.params;
     try {
-      const test = await TestModel.getTestById(test_id);
+      const test = await TestModel.getTestById(test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
@@ -107,7 +108,7 @@ class TestController {
     const { test_id } = req.params;
     const updateData = req.body;
     try {
-      const test = await TestModel.getTestById(test_id);
+      const test = await TestModel.getTestById(test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
@@ -124,7 +125,7 @@ class TestController {
   static async deleteTest(req, res) {
     const { test_id } = req.params;
     try {
-      const test = await TestModel.getTestById(test_id);
+      const test = await TestModel.getTestById(test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
@@ -146,6 +147,7 @@ class TestController {
         return res.status(400).json({ error: 'Responses must be an array.' });
       }
       await StudentResponseModel.insertResponses({ test_id, responses });
+      result = await ResultModel.calculateResult(req.user_id)
       res.status(200).json({
         message: 'Test responses submitted successfully',
         test_id,

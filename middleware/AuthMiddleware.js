@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 import UserSession from "../models/UserSession.js";
 
 class AuthMiddleware {
@@ -20,6 +20,7 @@ class AuthMiddleware {
       req.user_id = decoded.user_id;
       req.email = decoded.email;
       req.deviceType = decoded.deviceType;
+      req.role = decoded.role;
       next();
     } catch (error) {
       console.error(error)

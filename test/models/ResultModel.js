@@ -1,60 +1,87 @@
 import connection from "../../config/database.js"; 
-import { promisify } from 'util'; 
-const query = promisify(connection.query).bind(connection);
 
 class ResultModel {
-  static async createResult({ result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count }) {
+  static async getResultsByStudentId(student_id) {
     const queryStr = `
-      INSERT INTO results (result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      SELECT 
+        r.response_id,
+        r.student_id,
+        r.question_id,
+        q.test_id,
+        q.question_text,
+        q.question_type,
+        r.selected_option_id,
+        r.given_ans_text,
+        o.option_id,
+        o.is_correct,
+        q.positive_marks,
+        q.negative_marks
+      FROM 
+        student_response2 r
+      JOIN 
+        questions q ON r.question_id = q.question_id
+      LEFT JOIN 
+        options o ON r.selected_option_id = o.option_id
+      WHERE
+        r.student_id = ?;
     `;
-    try {
-      await query(queryStr, [result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count]);
-      return { result_id, test_id, student_id, student_score, student_rank, total_marks, correct_count, wrong_count };
-    } catch (err) {
-      throw new Error("Error creating result");
-    }
-  }
 
-  static async getResultById(result_id) {
-    const queryStr = "SELECT * FROM results WHERE result_id = ?";
     try {
-      const [rows] = await query(queryStr, [result_id]);
-      return rows[0] || null;
-    } catch (err) {
-      throw new Error("Error getting result by ID");
-    }
-  }
-
-  static async getResultsByTestId(test_id) {
-    const queryStr = "SELECT * FROM results WHERE test_id = ?";
-    try {
-      const [rows] = await query(queryStr, [test_id]);
+      const [rows] = await connection.query(queryStr, [student_id]);
       return rows;
     } catch (err) {
-      throw new Error("Error getting results by test ID");
+      throw new Error("Error getting results for the student");
     }
   }
 
-  static async updateResult(result_id, updatedFields) {
-    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
-    const queryStr = `UPDATE results SET ${updates} WHERE result_id = ?`;
-    try {
-      await query(queryStr, [...Object.values(updatedFields), result_id]);
-      return { result_id, ...updatedFields };
-    } catch (err) {
-      throw new Error("Error updating result");
-    }
+  static async calculateResult(student_id) {
+    const results = await this.getResultsByStudentId(student_id);
+    let totalPositiveMarks = 0;
+    let totalNegativeMarks = 0;
+
+    results.forEach((result) => {
+      const { is_correct, positive_marks, negative_marks } = result;
+      if (is_correct) {
+        totalPositiveMarks += positive_marks;
+      } else {
+        totalNegativeMarks -= negative_marks;
+      }
+    });
+
+    const finalScore = totalPositiveMarks - totalNegativeMarks;
+
+    return {
+      student_id,
+      totalPositiveMarks,
+      totalNegativeMarks,
+      finalScore,
+    };
   }
 
-  static async deleteResult(result_id) {
-    const queryStr = "DELETE FROM results WHERE result_id = ?";
-    try {
-      await query(queryStr, [result_id]);
-      return { success: true };
-    } catch (err) {
-      throw new Error("Error deleting result");
-    }
+  static async getDetailedResult(student_id) {
+    const results = await this.getResultsByStudentId(student_id);
+    return results.map((result) => {
+      const { 
+        response_id, student_id, question_id, test_id, question_text, 
+        question_type, selected_option_id, given_ans_text, option_id, 
+        is_correct, positive_marks, negative_marks 
+      } = result;
+
+      return {
+        response_id,
+        student_id,
+        question_id,
+        test_id,
+        question_text,
+        question_type,
+        selected_option_id,
+        given_ans_text,
+        option_id,
+        is_correct,
+        positive_marks,
+        negative_marks,
+      };
+    });
   }
 }
 

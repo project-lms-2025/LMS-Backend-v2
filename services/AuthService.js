@@ -105,7 +105,7 @@ class AuthService {
   
       OtpService.deleteOtp(email);
   
-      const sessionResult = await this.createSessionService(user.data.user_id, email, deviceType);
+      const sessionResult = await this.createSessionService(user.data.user_id, email, deviceType, user.data.role);
   
       if (sessionResult.statusCode === 200) {
         return { success: true, statusCode: 200, message: "Login successful", authToken: sessionResult.token, role: user.data.role };
@@ -118,9 +118,9 @@ class AuthService {
     }
   }
 
-  static async createSessionService(user_id, email, deviceType) {
+  static async createSessionService(user_id, email, deviceType, role) {
     try {
-      const token = jwt.sign({user_id, email, deviceType }, process.env.JWT_SECRET, {
+      const token = jwt.sign({user_id, email, deviceType, role}, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
       });
   
