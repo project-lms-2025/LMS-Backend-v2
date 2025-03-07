@@ -18,7 +18,11 @@ class TestModel {
 
   static async getTestById(test_id) {
     const queryStr = `
-      SELECT tests.*, questions.*, options.*
+      SELECT tests.*, 
+       questions.*, 
+       options.*, 
+       questions.image_url AS question_image_url, 
+       options.image_url AS option_image_url
       FROM tests
       LEFT JOIN questions ON tests.test_id = questions.test_id
       LEFT JOIN options ON questions.question_id = options.question_id
@@ -27,7 +31,6 @@ class TestModel {
 
     try {
       const [rows] = await connection.query(queryStr, [test_id]);
-
       const testData = {
         test_id: rows[0]?.test_id,
         teacher_id: rows[0]?.teacher_id,
@@ -44,11 +47,11 @@ class TestModel {
 
       rows.forEach(row => {
         let question = testData.questions.find(q => q.question_id === row.question_id);
-
         if (!question && row.question_id) {
           question = {
             question_id: row.question_id,
             question_text: row.question_text,
+            image_url: row.question_image_url,
             options: []
           };
           testData.questions.push(question);
@@ -58,11 +61,11 @@ class TestModel {
           question.options.push({
             option_id: row.option_id,
             option_text: row.option_text,
+            image_url: row.option_image_url
             // is_correct: row.is_correct
           });
         }
       });
-
       return testData.questions.length > 0 ? testData : null;
     } catch (err) {
       throw new Error("Error getting test by ID");
