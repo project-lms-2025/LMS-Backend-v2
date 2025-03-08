@@ -7,20 +7,19 @@ class StudentResponseModel {
     for (const response of responses) {
       const { question_id, options_chosen, response_text } = response;
       
-      for (const option_id of options_chosen) {
       // `${test_id}-${question_id}-${option_ids || response_text || ''}` will be used in future for test evaluation
-        const response_id = generateUniqueId();
-        const queryStr = `
-          INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        
-        try {
-          await connection.query(queryStr, [response_id, student_id, question_id, option_id, response_text, test_id]);
-        } catch (err) {
-          console.error(err)
-          throw new Error("Error inserting response");
-        }
+      const option_id = options_chosen.join('_')
+      const response_id = generateUniqueId();
+      const queryStr = `
+        INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      
+      try {
+        await connection.query(queryStr, [response_id, student_id, question_id, option_id || null, response_text || null, test_id]);
+      } catch (err) {
+        console.error(err)
+        throw new Error("Error inserting response");
       }
     }
 
