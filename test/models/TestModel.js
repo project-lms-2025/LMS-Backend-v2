@@ -54,6 +54,8 @@ class TestModel {
             image_url: row.question_image_url,
             question_type: row.question_type,
             section: row.section,
+            positive_marks: row.positive_marks,
+            negative_marks: row.negative_marks,
             options: []
           };
           testData.questions.push(question);

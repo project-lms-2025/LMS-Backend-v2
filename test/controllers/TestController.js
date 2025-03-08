@@ -141,12 +141,13 @@ class TestController {
   static async submitTest(req, res) {
     const { test_id } = req.params;
     const { responses } = req.body;
+    const student_id = req.user_id;
   
     try {
       if (!responses || !Array.isArray(responses)) {
         return res.status(400).json({ error: 'Responses must be an array.' });
       }
-      await StudentResponseModel.insertResponses({ test_id, responses });
+      await StudentResponseModel.insertResponses({ test_id,student_id, responses });
       result = await ResultModel.calculateResult(req.user_id)
       res.status(200).json({
         message: 'Test responses submitted successfully',

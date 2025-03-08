@@ -1,7 +1,7 @@
 import connection from "../../config/database.js"; 
 
 class ResultModel {
-  static async getResultsByStudentId(student_id) {
+  static async getResultsByStudentId(student_id, test_id) {
     const queryStr = `
       SELECT 
         r.response_id,
@@ -23,11 +23,11 @@ class ResultModel {
       LEFT JOIN 
         options o ON r.selected_option_id = o.option_id
       WHERE
-        r.student_id = ?;
+        r.student_id = ? and q.test_id = ?;
     `;
 
     try {
-      const [rows] = await connection.query(queryStr, [student_id]);
+      const [rows] = await connection.query(queryStr, [student_id, test_id]);
       return rows;
     } catch (err) {
       throw new Error("Error getting results for the student");

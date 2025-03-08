@@ -2,7 +2,7 @@ import connection from "../../config/database.js";
 import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class StudentResponseModel {
-  static async insertResponses({ test_id, responses }) {
+  static async insertResponses({ test_id, student_id, responses }) {
     for (const response of responses) {
       const { question_id, options_chosen, response_text } = response;
       
@@ -10,13 +10,14 @@ class StudentResponseModel {
       // `${test_id}-${question_id}-${option_ids || response_text || ''}` will be used in future for test evaluation
         const response_id = generateUniqueId();
         const queryStr = `
-          INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
+          VALUES (?, ?, ?, ?, ?, ?)
         `;
         
         try {
-          await connection.query(queryStr, [response_id, test_id, question_id, option_id, response_text]);
+          await connection.query(queryStr, [response_id, student_id, question_id, option_id, response_text, test_id]);
         } catch (err) {
+          console.error(err)
           throw new Error("Error inserting response");
         }
       }
