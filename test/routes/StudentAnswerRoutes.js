@@ -1,8 +1,8 @@
 import express from 'express';
-import ResultController from '../controllers/ResultController.js';
+import TestController from '../controllers/TestController.js';
 
 const router = express.Router();
 
-router.post('/tests/:test_id/submit', ResultController.generateAndSaveResult);
+router.post('/tests/:test_id/submit', TestController.submitTest);
 
 export default router;
