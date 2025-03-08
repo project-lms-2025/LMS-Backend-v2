@@ -3,6 +3,7 @@ import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class StudentResponseModel {
   static async insertResponses({ test_id, student_id, responses }) {
+    console.log(responses)
     for (const response of responses) {
       const { question_id, options_chosen, response_text } = response;
       
