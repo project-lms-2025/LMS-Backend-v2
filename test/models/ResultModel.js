@@ -99,7 +99,6 @@ class ResultModel {
 
   
   static async generateResult(test_id) {
-    const score_id = generateUniqueId();
 
     const queryStr = `
       INSERT INTO student_scores (score_id, test_id, student_id, final_score)
@@ -133,7 +132,7 @@ class ResultModel {
     `;
 
     try {
-      await connection.query(queryStr, [score_id, test_id]);
+      await connection.query(queryStr, [test_id]);
       return test_id;
     } catch (err) {
       console.error(err);
