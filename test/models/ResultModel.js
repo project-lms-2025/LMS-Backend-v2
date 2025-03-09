@@ -1,4 +1,5 @@
 import connection from "../../config/database.js"; 
+import { generateUniqueId } from '../../utils/idGenerator.js'
 
 class ResultModel {
   static async getDetailedResult(test_id, student_id) {
@@ -9,7 +10,8 @@ class ResultModel {
              questions.image_url AS question_image_url, 
              options.image_url AS option_image_url,
              student_response2.selected_option_id, 
-             student_response2.given_ans_text
+             student_response2.given_ans_text,
+             student_scores.final_score
       FROM tests
       LEFT JOIN questions ON tests.test_id = questions.test_id
       LEFT JOIN options ON questions.question_id = options.question_id
@@ -17,11 +19,14 @@ class ResultModel {
         ON questions.question_id = student_response2.question_id 
         AND student_response2.test_id = tests.test_id 
         AND student_response2.student_id = ?
+      LEFT JOIN student_scores 
+        ON student_scores.test_id = tests.test_id 
+        AND student_scores.student_id = ?
       WHERE tests.test_id = ?;
     `;
   
     try {
-      const [rows] = await connection.query(queryStr, [student_id, test_id]);
+      const [rows] = await connection.query(queryStr, [student_id, student_id, test_id]);
       
       const testData = {
         test_id: rows[0]?.test_id,
@@ -34,6 +39,7 @@ class ResultModel {
         duration: rows[0]?.duration,
         total_marks: rows[0]?.total_marks,
         created_at: rows[0]?.created_at,
+        score: rows[0]?.final_score,
         questions: []
       };
   
@@ -89,13 +95,16 @@ class ResultModel {
     } catch (err) {
       throw new Error("Error getting test by ID");
     }
-  }
+}
+
   
   static async generateResult(test_id) {
+    const score_id = generateUniqueId();
 
     const queryStr = `
-      INSERT INTO student_scores (test_id, student_id, final_score)
+      INSERT INTO student_scores (score_id, test_id, student_id, final_score)
       SELECT 
+          ?,  
           tests.test_id,
           student_response2.student_id,
           SUM(
@@ -124,13 +133,13 @@ class ResultModel {
     `;
 
     try {
-      await connection.query(queryStr, [test_id]);
+      await connection.query(queryStr, [score_id, test_id]);
       return res.json({ message: "Scores calculated and stored successfully", test_id });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error calculating and storing scores for all students" });
     }
-  }
+}
 
   static async getAllResults(test_id) {
     const queryStr = `

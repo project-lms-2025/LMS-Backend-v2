@@ -1,5 +1,4 @@
 import ResultModel from '../models/ResultModel.js';
-import { generateUniqueId } from '../../utils/idGenerator.js'
 
 class ResultController {
   static async getAllResults(req, res) {
