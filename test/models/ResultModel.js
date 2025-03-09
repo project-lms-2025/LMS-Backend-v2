@@ -104,7 +104,7 @@ class ResultModel {
     const queryStr = `
       INSERT INTO student_scores (score_id, test_id, student_id, final_score)
       SELECT 
-          ?,  
+          UUID(),  
           tests.test_id,
           student_response2.student_id,
           SUM(
@@ -117,8 +117,8 @@ class ResultModel {
                           WHEN options.is_correct = 0 AND FIND_IN_SET(options.option_id, student_response2.selected_option_id) > 0 THEN questions.negative_marks
                           ELSE 0
                       END
-                  WHEN questions.question_type = 'nat' AND student_response2.given_ans_text = questions.answer_text THEN questions.positive_marks
-                  WHEN questions.question_type = 'nat' AND student_response2.given_ans_text != questions.answer_text THEN questions.negative_marks
+                  WHEN questions.question_type = 'nat' AND student_response2.given_ans_text = options.option_text AND options.is_correct = 1 THEN questions.positive_marks
+                  WHEN questions.question_type = 'nat' AND student_response2.given_ans_text != options.option_text AND options.is_correct = 0 THEN questions.negative_marks
                   ELSE 0
               END
           ) AS total_score
