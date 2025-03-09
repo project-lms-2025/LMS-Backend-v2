@@ -1,5 +1,4 @@
 import connection from "../../config/database.js"; 
-import { generateUniqueId } from '../../utils/idGenerator.js'
 
 class ResultModel {
   static async getDetailedResult(test_id, student_id) {
@@ -142,10 +141,16 @@ class ResultModel {
 
   static async getAllResults(test_id) {
     const queryStr = `
-      SELECT score_id, test_id, student_id, final_score
-      FROM student_scores
-      WHERE test_id = ?
-      ORDER BY final_score DESC;
+      SELECT 
+        ss.score_id AS score_id, 
+        ss.test_id AS test_id, 
+        ss.student_id AS student_id, 
+        ss.final_score AS final_score, 
+        u.name AS student_name
+      FROM student_scores ss
+      JOIN users u ON ss.student_id = u.user_id
+      WHERE ss.test_id = ?
+      ORDER BY ss.final_score DESC;
     `;
     
     try {
