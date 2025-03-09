@@ -134,10 +134,10 @@ class ResultModel {
 
     try {
       await connection.query(queryStr, [score_id, test_id]);
-      return res.json({ message: "Scores calculated and stored successfully", test_id });
+      return test_id;
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ message: "Error calculating and storing scores for all students" });
+      throw new Error("Error calculating and storing scores for all students");
     }
 }
 
