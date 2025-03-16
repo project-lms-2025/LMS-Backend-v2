@@ -2,14 +2,14 @@ import connection from "../../config/database.js";
 import { promisify } from 'util';
 
 class QuestionModel {
-  static async createQuestion({ question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks, section }) {
+  static async createQuestion({ question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks, section, correct_option_id }) {
     const queryStr = `
-      INSERT INTO questions (question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO questions (question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     try {
-      await connection.query(queryStr, [question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section]);
-      return { question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section };
+      await connection.query(queryStr, [question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id]);
+      return { question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id };
     } catch (err) {
       console.error("error creating option", err)
       throw new Error("Error creating question");

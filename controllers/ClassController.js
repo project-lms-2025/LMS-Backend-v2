@@ -4,7 +4,7 @@ class ClassController {
     static async createClass(req, res) {
         try {
             const { course_id, class_title, class_date_time, recording_url } = req.body;
-            const teacher_email = req.email;
+            const teacher_email = req.user_id;
 
             const newClass = await ClassService.createClass(teacher_email, course_id, class_title, class_date_time, recording_url);
             res.status(201).json(newClass);

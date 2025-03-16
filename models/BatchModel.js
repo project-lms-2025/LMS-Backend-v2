@@ -2,9 +2,9 @@ import connection from "../config/database.js";
 
 class BatchModel {
   static async createBatch(batch) {
-    const query = 'INSERT INTO batches (batch_id, batch_name, start_date, end_date) VALUES (?, ?, ?, ?)';
+    const query = 'INSERT INTO batches (batch_id, batch_name,description, start_date, end_date) VALUES (?, ?, ?, ?, ?)';
     try {
-      await connection.query(query, [batch.batch_id, batch.batch_name, batch.start_date, batch.end_date]);
+      await connection.query(query, [batch.batch_id, batch.batch_name, batch.description,  batch.start_date, batch.end_date]);
       return { success: true, message: 'Batch created successfully', data: batch };
     } catch (err) {
       return { success: false, message: err.message || 'Error creating batch' };

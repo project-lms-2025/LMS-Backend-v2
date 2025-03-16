@@ -76,8 +76,37 @@ class TestModel {
     }
   }
 
+  static async getAttemptedTests(studentId) {
+    const queryStr = `
+      SELECT 
+          sr.test_id,
+          t.schedule_date,
+          t.schedule_time,
+          t.title,
+          t.description
+      FROM 
+          student_response2 sr
+      JOIN 
+          tests t ON sr.test_id = t.test_id
+      WHERE 
+          sr.student_id = ?
+      `;
+      try {
+        const [rows] = await connection.query(queryStr, [studentId]);
+        return rows;
+      } catch (err) {
+        throw new Error("Error getting all tests");
+      }
+  }
+
+
+
   static async getAllTests() {
-    const queryStr = "SELECT * FROM tests";
+    const queryStr = `
+      SELECT tests.*, courses.course_name
+      FROM tests
+      JOIN courses ON tests.course_id = courses.course_id;
+    `;
     try {
       const [rows] = await connection.query(queryStr);
       return rows;

@@ -2,12 +2,21 @@ import TestModel from '../models/TestModel.js';
 import QuestionModel from '../models/QuestionModel.js'
 import OptionModel from '../models/OptionModel.js'
 import StudentResponseModel from '../models/StudentResponseModel.js';
-import ResultModel from '../models/ResultModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
     try {
       const tests = await TestModel.getAllTests();
+      res.status(200).json(tests);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to fetch tests' });
+    }
+  }
+
+  static async getAttemptedTests(req, res) {
+    try {
+      const tests = await TestModel.getAttemptedTests(req.user_id);
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);
@@ -45,6 +54,7 @@ class TestController {
 
   static async createTest(req, res){
     const examData = req.body;
+    console.log("data received at create test", examData)
 
     try {
       const { title, test_id, course_id, description, duration, schedule_date, schedule_time, totalMarks, questions } = examData;
@@ -64,7 +74,7 @@ class TestController {
       console.log("test created successfully")
 
       for (let questionData of questions) {
-        const { question_id, section, question_text, question_type,image_url, positive_marks, negative_marks, options } = questionData;
+        const { question_id, section, question_text, question_type,image_url, positive_marks, negative_marks, options, correct_option_id } = questionData;
         const question = await QuestionModel.createQuestion({
           question_id,
           test_id,
@@ -74,6 +84,7 @@ class TestController {
           positive_marks,
           negative_marks,
           section,
+          correct_option_id,
         });
 
         for (let optionData of options) {

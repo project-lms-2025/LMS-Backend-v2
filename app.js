@@ -51,6 +51,9 @@ app.use('/api/class/', classRoutes)
 app.use('/api/test/', testRoutes)
 app.use("/api/admin", AuthMiddleware.auth, userAssignmentRoutes);
 app.use('/api/', mainRoutes)
+app.use('/', (req, res) =>{
+  return res.json({message: "this is the home of teachertech test api"})
+})
 
 app.use(errorHandler);
 
