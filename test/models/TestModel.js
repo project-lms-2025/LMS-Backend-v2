@@ -79,6 +79,7 @@ class TestModel {
   static async getAttemptedTests(studentId) {
     const queryStr = `
       SELECT 
+          DISTINCT
           sr.test_id,
           t.schedule_date,
           t.schedule_time,
