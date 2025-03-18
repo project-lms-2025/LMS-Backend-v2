@@ -24,9 +24,9 @@ class UserService {
   }
   
 
-  static async getUserDataByEmail(email) {
+  static async getUserData(user_id) {
     try {
-      const user = await UserModel.getUserDataByEmail(email);
+      const user = await UserModel.getUserData(user_id);
   
       if (!user) {
         return { success: false, statusCode: 404, message: "User not found" };
@@ -34,7 +34,7 @@ class UserService {
   
       const authData = user.authData;
   
-      return { success: true, statusCode: 200, message: "User data retrieved successfully", data: {email, ...authData} };
+      return { success: true, statusCode: 200, message: "User data retrieved successfully", data: {user_id, ...authData} };
     } catch (error) {
       console.error("Error fetching user data in service:", error);
       return { success: false, statusCode: 500, message: "Error fetching user data" };

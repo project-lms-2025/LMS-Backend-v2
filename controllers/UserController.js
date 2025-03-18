@@ -32,7 +32,7 @@ class UserController {
 
   static async getUserDetails(req, res) {
     try {
-      const response = await UserService.getUserDataByEmail(req.email);
+      const response = await UserService.getUserData(req.user_id);
   
       if (response.success) {
         return res.status(response.statusCode).json({ success: true, statusCode: response.statusCode, message: response.message, data: response.data });

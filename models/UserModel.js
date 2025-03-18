@@ -65,10 +65,10 @@ class UserModel {
     }
   }
 
-  static async getUserDataByEmail(email) {
-    const query = 'SELECT * FROM users WHERE email = ?';
+  static async getUserData(user_id) {
+    const query = 'SELECT * FROM users WHERE user_id = ?';
     try {
-      const [results] = await connection.query(query, [email]);
+      const [results] = await connection.query(query, [user_id]);
       return results.length ? { authData: results[0] } : { success: false, message: "User not found" };
     } catch (err) {
       return { success: false, message: err.message || 'Error fetching user details' };
