@@ -121,8 +121,7 @@ class ResultModel {
             ON questions.question_id = student_response2.question_id 
             AND student_response2.test_id = tests.test_id
         WHERE tests.test_id = ?
-        GROUP BY student_response2.student_id, questions.question_id;
-
+        GROUP BY student_response2.student_id;
     `;
 
     try {
