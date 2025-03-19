@@ -19,11 +19,21 @@ class StudentResponseModel {
       try {
         await connection.query(queryStr, [response_id, student_id, question_id, option_id || null, response_text || null, test_id]);
 
-        const [question] = await connection.query("SELECT question_type, question_text, correct_option_id, positive_marks, negative_marks FROM questions WHERE question_id = ?", [question_id]);
-        const { question_type, question_text, correct_option_id, positive_marks, negative_marks } = question[0];
+        const [question] = await connection.query(`
+          SELECT q.question_type, 
+                q.question_text, 
+                q.correct_option_id, 
+                q.positive_marks, 
+                q.negative_marks, 
+                o.option_text
+          FROM questions q
+          LEFT JOIN options o ON q.question_id = o.question_id
+          WHERE q.question_id = ?;
 
+          `, [question_id]);
+        const { question_type,option_text, correct_option_id, positive_marks, negative_marks } = question[0];
         if (question_type === 'NAT') {
-          if (response_text === question_text) {
+          if (response_text === option_text) {
             totalScore += positive_marks;
           } else {
             totalScore -= negative_marks;
