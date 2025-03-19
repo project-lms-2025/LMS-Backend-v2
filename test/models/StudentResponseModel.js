@@ -2,13 +2,14 @@ import connection from "../../config/database.js";
 import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class StudentResponseModel {
-  static async insertResponses({ test_id, student_id, responses }) {
+  static async submitResponse({ test_id, student_id, responses }) {
     console.log(responses)
+    let totalScore = 0;
+
     for (const response of responses) {
       const { question_id, options_chosen, response_text } = response;
       
-      // `${test_id}-${question_id}-${option_ids || response_text || ''}` will be used in future for test evaluation
-      const option_id = options_chosen.join('_')
+      const option_id = options_chosen.join('_');
       const response_id = generateUniqueId();
       const queryStr = `
         INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
@@ -17,13 +18,43 @@ class StudentResponseModel {
       
       try {
         await connection.query(queryStr, [response_id, student_id, question_id, option_id || null, response_text || null, test_id]);
+
+        const [question] = await connection.query("SELECT question_type, question_text, correct_option_id, positive_marks, negative_marks FROM questions WHERE question_id = ?", [question_id]);
+        const { question_type, question_text, correct_option_id, positive_marks, negative_marks } = question[0];
+
+        if (question_type === 'NAT') {
+          if (response_text === question_text) {
+            totalScore += positive_marks;
+          } else {
+            totalScore -= negative_marks;
+          }
+        } else if (question_type === 'MCQ' || question_type === 'MSQ') {
+          if (option_id === correct_option_id) {
+            totalScore += positive_marks;
+          } else {
+            totalScore -= negative_marks;
+          }
+        }
       } catch (err) {
-        console.error(err)
+        console.error(err);
         throw new Error("Error inserting response");
       }
     }
 
-    return { message: 'Responses inserted successfully' };
+    const score_id = generateUniqueId();
+    const scoreQueryStr = `
+      INSERT INTO student_scores (score_id, test_id, student_id, final_score)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE final_score = ?
+    `;
+    try {
+      await connection.query(scoreQueryStr, [score_id, test_id, student_id, totalScore, totalScore]);
+    } catch (err) {
+      console.error(err);
+      throw new Error("Error updating student score");
+    }
+
+    return { message: 'Responses inserted and score updated successfully' };
   }
 
   static async getResponsesByTestId(test_id) {

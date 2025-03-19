@@ -97,7 +97,6 @@ class ResultModel {
     }
 }
 
-  
   static async generateResult(test_id) {
 
     const queryStr = `

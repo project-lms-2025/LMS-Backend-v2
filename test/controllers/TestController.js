@@ -158,7 +158,7 @@ class TestController {
       if (!responses || !Array.isArray(responses)) {
         return res.status(400).json({ error: 'Responses must be an array.' });
       }
-      await StudentResponseModel.insertResponses({ test_id, student_id, responses });
+      await StudentResponseModel.submitResponse({ test_id, student_id, responses });
       res.status(200).json({
         message: 'Test responses submitted successfully',
         test_id,

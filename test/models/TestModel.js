@@ -100,8 +100,6 @@ class TestModel {
       }
   }
 
-
-
   static async getAllTests() {
     const queryStr = `
       SELECT tests.*, courses.course_name
