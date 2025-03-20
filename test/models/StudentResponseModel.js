@@ -3,13 +3,13 @@ import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class StudentResponseModel {
   static async submitResponse({ test_id, student_id, responses }) {
-    console.log(responses)
+    console.log("user responses: ", responses)
     let totalScore = 0;
 
     for (const response of responses) {
       const { question_id, options_chosen, response_text } = response;
       
-      const option_id = options_chosen.join('_');
+      const option_id = options_chosen.sort().join('_');
       const response_id = generateUniqueId();
       const queryStr = `
         INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
@@ -32,6 +32,7 @@ class StudentResponseModel {
 
           `, [question_id]);
         const { question_type,option_text, correct_option_id, positive_marks, negative_marks } = question[0];
+        console.log({question_type,option_text, correct_option_id, positive_marks, negative_marks})
         if (question_type === 'NAT') {
           if (response_text === option_text) {
             totalScore += positive_marks;
