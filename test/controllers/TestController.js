@@ -1,7 +1,9 @@
 import TestModel from '../models/TestModel.js';
+import TSTestModel from '../models/TSTestModel.js';
 import QuestionModel from '../models/QuestionModel.js'
 import OptionModel from '../models/OptionModel.js'
 import StudentResponseModel from '../models/StudentResponseModel.js';
+import TestSeriesModel from '../models/TestSeriesModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
@@ -57,24 +59,72 @@ class TestController {
     console.log("data received at create test", examData)
 
     try {
-      const { title, test_id, course_id, description, duration, schedule_date, schedule_time, totalMarks, questions } = examData;
+      const { 
+        title, 
+        test_id, 
+        course_id, 
+        series_id,
+        description, 
+        duration, 
+        schedule_date, 
+        schedule_time, 
+        totalMarks, 
+        questions,
+        test_type 
+      } = examData;
 
-      const test = await TestModel.createTest({
-        test_id,
-        teacher_id: req.user_id,
-        course_id,
-        title,
-        description,
-        schedule_date,
-        schedule_time,
-        duration,
-        totalMarks
-      });
+      // Validate test type
+      if (!test_type || !['course', 'series'].includes(test_type)) {
+        return res.status(400).json({
+          message: 'Invalid test type. Must be either "course" or "series"'
+        });
+      }
+
+      // If it's a series test, validate series_id
+      if (test_type === 'series' && !series_id) {
+        return res.status(400).json({
+          message: 'series_id is required for series tests'
+        });
+      }
+
+      // If it's a course test, validate course_id
+      if (test_type === 'course' && !course_id) {
+        return res.status(400).json({
+          message: 'course_id is required for course tests'
+        });
+      }
+
+      let test;
+      if (test_type === 'course') {
+        test = await TestModel.createTest({
+          test_id,
+          teacher_id: req.user_id,
+          course_id,
+          title,
+          description,
+          schedule_date,
+          schedule_time,
+          duration,
+          totalMarks
+        });
+      } else {
+        test = await TSTestModel.createTSTest({
+          test_id,
+          teacher_id: req.user_id,
+          series_id,
+          title,
+          description,
+          schedule_date,
+          schedule_time,
+          duration,
+          totalMarks
+        });
+      }
 
       console.log("test created successfully")
 
       for (let questionData of questions) {
-        const { question_id, section, question_text, question_type,image_url, positive_marks, negative_marks, options, correct_option_id } = questionData;
+        const { question_id, section, question_text, question_type, image_url, positive_marks, negative_marks, options, correct_option_id } = questionData;
         const question = await QuestionModel.createQuestion({
           question_id,
           test_id,
@@ -100,7 +150,7 @@ class TestController {
         }
       }
 
-      console.log("question and options  created successfully")
+      console.log("question and options created successfully")
 
       return res.status(201).json({
         message: 'Exam created successfully',

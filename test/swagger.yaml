@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Test Management API
-  description: API for managing tests, questions, options, and results.
+  description: API for managing tests, test series, questions, options, and results
   version: 1.0.0
 servers:
   - url: /api/test
@@ -17,111 +17,176 @@ components:
     Test:
       type: object
       properties:
+        test_id:
+          type: string
+        teacher_id:
+          type: string
         course_id:
           type: string
         title:
           type: string
         description:
           type: string
-        scheduled_date_time:
+        schedule_date:
           type: string
-          format: date-time
-        time_duration:
+          format: date
+        schedule_time:
+          type: string
+          format: time
+        duration:
+          type: integer
+        total_marks:
           type: integer
         questions:
           type: array
           items:
-            type: object
-            properties:
-              question_id:
-                type: string
-              answers:
-                type: array
-                items:
-                  type: string
+            $ref: '#/components/schemas/Question'
       required:
+        - test_id
+        - teacher_id
         - course_id
         - title
-        - description
-        - scheduled_date_time
-        - time_duration
+        - schedule_date
+        - schedule_time
+        - duration
+        - total_marks
 
+    TestSeries:
+      type: object
+      properties:
+        series_id:
+          type: string
+        teacher_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        total_tests:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - series_id
+        - teacher_id
+        - title
+        - total_tests
 
-    Question:
+    TSTest:
       type: object
       properties:
         test_id:
           type: string
-        question_type:
+        teacher_id:
           type: string
-        question_text:
+        series_id:
           type: string
-        answers:
+        title:
+          type: string
+        description:
+          type: string
+        schedule_date:
+          type: string
+          format: date
+        schedule_time:
+          type: string
+          format: time
+        duration:
+          type: integer
+        total_marks:
+          type: integer
+        questions:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Question'
+      required:
+        - test_id
+        - teacher_id
+        - series_id
+        - title
+        - schedule_date
+        - schedule_time
+        - duration
+        - total_marks
+
+    Question:
+      type: object
+      properties:
+        question_id:
+          type: string
+        test_id:
+          type: string
+        question_type:
+          type: string
+          enum: [MCQ, MSQ, NAT]
+        question_text:
+          type: string
         image_url:
           type: string
         positive_marks:
           type: integer
         negative_marks:
           type: integer
-    
+        section:
+          type: string
+        correct_option_id:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+      required:
+        - question_id
+        - test_id
+        - question_type
+        - question_text
+        - positive_marks
+        - negative_marks
+
     Option:
       type: object
       properties:
+        option_id:
+          type: string
+        question_id:
+          type: string
         option_text:
           type: string
         image_url:
           type: string
         is_correct:
           type: boolean
-
+      required:
+        - option_id
+        - question_id
+        - option_text
+        - is_correct
 
     Result:
       type: object
       properties:
         test_id:
           type: string
-        email:
+        student_id:
           type: string
-        student_score:
+        final_score:
           type: integer
-        student_rank:
-          type: integer
-        total_marks:
-          type: integer
-        correct_count:
-          type: integer
-        wrong_count:
-          type: integer
-
-    StudentAnswers:
-      type: object
-      properties:
-        email:
+        created_at:
           type: string
-        answers:
-          type: array
-          items:
-            type: object
-            properties:
-              question_id:
-                type: string
-              chosen_answer:
-                type: string
-              postive_marks:
-                type: integer
-              negative_marks:
-                type: integer
-
+          format: date-time
+      required:
+        - test_id
+        - student_id
+        - final_score
 
 paths:
+  # Regular Test Routes
   /tests:
     get:
       summary: Get all tests
       tags:
-        - test
+        - Regular Tests
       security:
         - BearerAuth: []
       responses:
@@ -137,11 +202,10 @@ paths:
     post:
       summary: Create a new test
       tags:
-        - test
+        - Regular Tests
       security:
         - BearerAuth: []
       requestBody:
-        description: Test object that needs to be created
         required: true
         content:
           application/json:
@@ -159,19 +223,18 @@ paths:
     get:
       summary: Get a specific test
       tags:
-        - test
+        - Regular Tests
       security:
         - BearerAuth: []
       parameters:
         - name: test_id
           in: path
           required: true
-          description: The ID of the test
           schema:
             type: string
       responses:
         '200':
-          description: A specific test
+          description: Test details
           content:
             application/json:
               schema:
@@ -180,18 +243,16 @@ paths:
     put:
       summary: Update a test
       tags:
-        - test
+        - Regular Tests
       security:
         - BearerAuth: []
       parameters:
         - name: test_id
           in: path
           required: true
-          description: The ID of the test
           schema:
             type: string
       requestBody:
-        description: Test object that needs to be updated
         required: true
         content:
           application/json:
@@ -200,394 +261,183 @@ paths:
       responses:
         '200':
           description: Test updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Test'
 
     delete:
       summary: Delete a test
       tags:
-        - test
+        - Regular Tests
       security:
         - BearerAuth: []
       parameters:
         - name: test_id
           in: path
           required: true
-          description: The ID of the test to delete
           schema:
             type: string
       responses:
         '204':
           description: Test deleted successfully
 
-  /tests/{test_id}/questions:
-    get:
-      summary: Get all questions for a test
+  # Test Series Routes
+  /test-series:
+    post:
+      summary: Create a new test series
       tags:
-        - test/questions
+        - Test Series
       security:
         - BearerAuth: []
-      parameters:
-        - name: test_id
-          in: path
-          required: true
-          description: The ID of the test
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestSeries'
+      responses:
+        '201':
+          description: Test series created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSeries'
+
+    get:
+      summary: Get all test series
+      tags:
+        - Test Series
+      security:
+        - BearerAuth: []
       responses:
         '200':
-          description: List of questions for a test
+          description: List of test series
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Question'
+                  $ref: '#/components/schemas/TestSeries'
 
-    post:
-      summary: Create a new question for a test
-      tags:
-        - test/questions
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: test_id
-          in: path
-          required: true
-          description: The ID of the test
-          schema:
-            type: string
-      requestBody:
-        description: Question object that needs to be created
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Question'
-      responses:
-        '201':
-          description: Question created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Question'
-
-  /questions/{question_id}:
+  /test-series/{series_id}:
     get:
-      summary: Get a specific question
+      summary: Get a specific test series
       tags:
-        - test/questions
+        - Test Series
       security:
         - BearerAuth: []
       parameters:
-        - name: question_id
+        - name: series_id
           in: path
           required: true
-          description: The ID of the question
           schema:
             type: string
       responses:
         '200':
-          description: A specific question
+          description: Test series details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Question'
+                $ref: '#/components/schemas/TestSeries'
 
     put:
-      summary: Update a question
+      summary: Update a test series
       tags:
-        - test/questions
+        - Test Series
       security:
         - BearerAuth: []
       parameters:
-        - name: question_id
+        - name: series_id
           in: path
           required: true
-          description: The ID of the question to update
           schema:
             type: string
       requestBody:
-        description: Question object that needs to be updated
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Question'
+              $ref: '#/components/schemas/TestSeries'
       responses:
         '200':
-          description: Question updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Question'
+          description: Test series updated successfully
 
     delete:
-      summary: Delete a question
+      summary: Delete a test series
       tags:
-        - test/questions
+        - Test Series
       security:
         - BearerAuth: []
       parameters:
-        - name: question_id
+        - name: series_id
           in: path
           required: true
-          description: The ID of the question to delete
           schema:
             type: string
       responses:
         '204':
-          description: Question deleted successfully
+          description: Test series deleted successfully
 
-  /questions/{question_id}/options:
+  /test-series/{series_id}/tests:
     get:
-      summary: Get all options for a question
+      summary: Get all tests in a series
       tags:
-        - test/options
+        - Test Series
       security:
         - BearerAuth: []
       parameters:
-        - name: question_id
+        - name: series_id
           in: path
           required: true
-          description: The ID of the question
           schema:
             type: string
       responses:
         '200':
-          description: List of options for a question
+          description: List of tests in the series
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Option'
+                  $ref: '#/components/schemas/TSTest'
 
-    post:
-      summary: Create a new option for a question
+  /test-series/{series_id}/tests/{test_id}:
+    get:
+      summary: Get a specific test in a series
       tags:
-        - test/options
+        - Test Series
       security:
         - BearerAuth: []
       parameters:
-        - name: question_id
+        - name: series_id
           in: path
           required: true
-          description: The ID of the question
           schema:
             type: string
-      requestBody:
-        description: Option object that needs to be created
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Option'
-      responses:
-        '201':
-          description: Option created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Option'
-  /getCorrectOptions/{test_id}:
-    get:
-      summary: Get the correct options for a specific test
-      tags:
-        - test/options
-      security:
-        - BearerAuth: []
-      parameters:
         - name: test_id
           in: path
           required: true
-          description: The ID of the test
           schema:
             type: string
       responses:
         '200':
-          description: List of correct options for the test
+          description: Test details
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    option_id:
-                      type: string
-                    option_text:
-                      type: string
-                    is_correct:
-                      type: boolean
-        '404':
-          description: Test not found
-        '500':
-          description: Internal server error
+                $ref: '#/components/schemas/TSTest'
 
-  /options/{option_id}:
-    put:
-      summary: Update an option
-      tags:
-        - test/options
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: option_id
-          in: path
-          required: true
-          description: The ID of the option to update
-          schema:
-            type: string
-      requestBody:
-        description: Option object that needs to be updated
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Option'
-      responses:
-        '200':
-          description: Option updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Option'
-
-    delete:
-      summary: Delete an option
-      tags:
-        - test/options
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: option_id
-          in: path
-          required: true
-          description: The ID of the option to delete
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Option deleted successfully
-
-  /tests/{test_id}/results:
-    get:
-      summary: Get all results for a test
-      tags:
-        - test/results
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: test_id
-          in: path
-          required: true
-          description: The ID of the test
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of results for a test
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Result'
-
-    post:
-      summary: Create a new result for a test
-      tags:
-        - test/results
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: test_id
-          in: path
-          required: true
-          description: The ID of the test
-          schema:
-            type: string
-      requestBody:
-        description: Result object that needs to be created
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Result'
-      responses:
-        '201':
-          description: Result created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Result'
-
-  /results/{result_id}:
-    get:
-      summary: Get a specific result
-      tags:
-        - test/results
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: result_id
-          in: path
-          required: true
-          description: The ID of the result
-          schema:
-            type: string
-      responses:
-        '200':
-          description: A specific result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Result'
-
-    put:
-      summary: Update a result
-      tags:
-        - test/results
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: result_id
-          in: path
-          required: true
-          description: The ID of the result to update
-          schema:
-            type: string
-      requestBody:
-        description: Result object that needs to be updated
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Result'
-      responses:
-        '200':
-          description: Result updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Result'
-
+  # Common Routes for both Regular Tests and Test Series Tests
   /tests/{test_id}/submit:
     post:
-      summary: Calculate student scores for a test.
-      description: Calculates the score for a student's answers to a test.
+      summary: Submit test responses
+      tags:
+        - Common
       security:
         - BearerAuth: []
       parameters:
-        - in: path
-          name: test_id
+        - name: test_id
+          in: path
           required: true
           schema:
             type: string
-          description: The ID of the test.
       requestBody:
         required: true
         content:
@@ -595,94 +445,44 @@ paths:
             schema:
               type: object
               properties:
-                answers:
+                responses:
                   type: array
                   items:
                     type: object
                     properties:
                       question_id:
                         type: string
-                        description: The ID of the question.
-                      chosen_answer:
+                      options_chosen:
                         type: array
                         items:
                           type: string
-                        description: The student's chosen answer(s).
-                    required:
-                      - question_id
-                      - chosen_answer
+                      response_text:
+                        type: string
               required:
-                - answers
+                - responses
       responses:
         '200':
-          description: Successful score calculation.
+          description: Responses submitted successfully
+
+  /tests/{test_id}/results:
+    get:
+      summary: Get test results
+      tags:
+        - Common
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: test_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test results
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  student_email:
-                    type: string
-                    description: The student's email.
-                  test_id:
-                    type: string
-                    description: The ID of the test.
-                  total_score:
-                    type: integer
-                    description: The total score achieved by the student.
-                  correct_count:
-                    type: integer
-                    description: The number of correct answers.
-                  wrong_count:
-                    type: integer
-                    description: The number of incorrect answers.
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        question_id:
-                          type: string
-                          description: The ID of the question.
-                        score:
-                          type: number
-                          description: The score for the question.
-                        message:
-                          type: string
-                          description: Optional message, e.g., "Question not found".
-        '400':
-          description: Invalid request format.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '404':
-          description: Questions not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+                type: array
+                items:
+                  $ref: '#/components/schemas/Result'
