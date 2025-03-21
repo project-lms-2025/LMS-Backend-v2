@@ -5,13 +5,14 @@ class UserSession {
   static async createOrUpdateSession(email, deviceType, token) {
     const sessionId = generateUniqueId();
     const createdAt = Date.now();
+    console.log("token from model",token)
     const query = `
       INSERT INTO user_sessions (session_id, email, device_type, token)
       VALUES (?, ?, ?, ?) 
       ON DUPLICATE KEY UPDATE token = ?, created_at = ?;
     `;
     try {
-      await connection.query(query, [sessionId, email, deviceType, token, createdAt, token, createdAt]);
+      await connection.query(query, [sessionId, email, deviceType, token, token, createdAt]);
       return { success: true, message: 'Session created or updated successfully' };
     } catch (err) {
       console.error("DB error: ", err)

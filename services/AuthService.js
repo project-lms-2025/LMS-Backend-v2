@@ -123,7 +123,7 @@ class AuthService {
       const token = jwt.sign({user_id, email, deviceType, role}, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN,
       });
-  
+      console.log("token from ",token)
       await UserSession.createOrUpdateSession(email, deviceType, token);
       return { success: true, statusCode: 200, message: "Session created successfully", token: token };
     } catch (error) {
