@@ -105,7 +105,7 @@ class TestController {
           schedule_date,
           schedule_time,
           duration,
-          totalMarks
+          total_marks: totalMarks
         });
       } else {
         test = await TSTestModel.createTSTest({
@@ -117,7 +117,7 @@ class TestController {
           schedule_date,
           schedule_time,
           duration,
-          totalMarks
+          total_marks: totalMarks
         });
       }
 
