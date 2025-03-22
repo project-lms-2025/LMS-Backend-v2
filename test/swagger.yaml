@@ -4,7 +4,7 @@ info:
   description: API for managing tests, test series, questions, options, and results
   version: 1.0.0
 servers:
-  - url: /api/test
+  - url: /api
 
 components:
   securitySchemes:

@@ -50,7 +50,7 @@ app.use('/api/batch/', batchRoutes)
 app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
 app.use('/api/test/', testRoutes)
-app.use('/api/test-series/', AuthMiddleware.auth, testSeriesRoutes)
+app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
 app.use("/api/admin", AuthMiddleware.auth, userAssignmentRoutes);
 app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{

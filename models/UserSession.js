@@ -9,10 +9,10 @@ class UserSession {
     const query = `
       INSERT INTO user_sessions (session_id, email, device_type, token)
       VALUES (?, ?, ?, ?) 
-      ON DUPLICATE KEY UPDATE token = ?, created_at = ?;
+      ON DUPLICATE KEY UPDATE token = ?;
     `;
     try {
-      await connection.query(query, [sessionId, email, deviceType, token, token, createdAt]);
+      await connection.query(query, [sessionId, email, deviceType, token, token]);
       return { success: true, message: 'Session created or updated successfully' };
     } catch (err) {
       console.error("DB error: ", err)
