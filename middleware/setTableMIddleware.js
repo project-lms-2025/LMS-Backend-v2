@@ -1,6 +1,6 @@
 const setTable = (req, res, next) => {
-    const series_id = req.body.series_id;
-    const course_id = req.body.course_id;
+    const series_id = req.body.series_id || req.query.series_id || req.params.series_id;
+    const course_id = req.body.course_id || req.query.course_id || req.params.course
     const test_type = req.body.test_type || req.query.test_type || req.params.test_type;
     if (!test_type || !['course', 'series'].includes(test_type)) {
       return res.status(400).json({

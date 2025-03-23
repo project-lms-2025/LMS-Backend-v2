@@ -54,9 +54,8 @@ class TestSeriesController {
   static async getTestsInSeries(req, res) {
     const { series_id } = req.params;
     try {
-      const tests = await TSTestModel.getAllTSTests();
-      const seriesTests = tests.filter(test => test.series_id === series_id);
-      res.status(200).json(seriesTests);
+      const tests = await TSTestModel.getAllTSTests(series_id);
+      res.status(200).json(tests);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch tests in series' });
@@ -67,6 +66,7 @@ class TestSeriesController {
     const { series_id, test_id } = req.params;
     try {
       const test = await TSTestModel.getTSTestById(test_id, req.role);
+      console.log(test);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
