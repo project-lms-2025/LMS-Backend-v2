@@ -4,7 +4,7 @@ info:
   description: API for managing tests, test series, questions, options, and results
   version: 1.0.0
 servers:
-  - url: /api
+  - url: /api/
 
 components:
   securitySchemes:
@@ -179,10 +179,9 @@ components:
         - test_id
         - student_id
         - final_score
-
 paths:
   # Regular Test Routes
-  /tests:
+  /test/tests:
     get:
       summary: Get all tests
       tags:
@@ -219,7 +218,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Test'
 
-  /tests/{test_id}:
+  /test/tests/{test_id}:
     get:
       summary: Get a specific test
       tags:
@@ -277,7 +276,6 @@ paths:
       responses:
         '204':
           description: Test deleted successfully
-
   # Test Series Routes
   /test-series:
     post:
@@ -425,7 +423,7 @@ paths:
                 $ref: '#/components/schemas/TSTest'
 
   # Common Routes for both Regular Tests and Test Series Tests
-  /tests/{test_id}/submit:
+  /test/tests/{test_id}/submit:
     post:
       summary: Submit test responses
       tags:
@@ -464,7 +462,7 @@ paths:
         '200':
           description: Responses submitted successfully
 
-  /tests/{test_id}/results:
+  /test/tests/{test_id}/results:
     get:
       summary: Get test results
       tags:

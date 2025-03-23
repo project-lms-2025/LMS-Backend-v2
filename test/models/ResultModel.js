@@ -1,34 +1,33 @@
 import connection from "../../config/database.js"; 
 
 class ResultModel {
-  static async getDetailedResult(test_id, student_id) {
+  static async getDetailedResult(table_name, test_id, student_id) {
     const queryStr = `
       SELECT 
-          tests.*, 
-          questions.*, 
-          options.*, 
-          questions.image_url AS question_image_url, 
-          options.image_url AS option_image_url,
-          student_response2.selected_option_id, 
-          student_response2.given_ans_text,
-          student_scores.final_score
-      FROM tests
-      LEFT JOIN questions ON tests.test_id = questions.test_id
-      LEFT JOIN options ON questions.question_id = options.question_id
-      LEFT JOIN student_response2 ON student_response2.question_id = questions.question_id AND student_response2.test_id = tests.test_id
-      LEFT JOIN student_scores ON student_scores.student_id = student_response2.student_id AND student_scores.test_id = tests.test_id
-      WHERE tests.test_id = ? AND student_response2.student_id = ?
+          ${table_name}tests.*, 
+          ${table_name}questions.*, 
+          ${table_name}options.*, 
+          ${table_name}questions.image_url AS question_image_url, 
+          ${table_name}options.image_url AS option_image_url,
+          ${table_name}student_response2.selected_option_id, 
+          ${table_name}student_response2.given_ans_text,
+          ${table_name}student_scores.final_score
+      FROM ${table_name}tests
+      LEFT JOIN ${table_name}questions ON ${table_name}tests.test_id = ${table_name}questions.test_id
+      LEFT JOIN ${table_name}options ON ${table_name}questions.question_id = ${table_name}options.question_id
+      LEFT JOIN ${table_name}student_response2 ON ${table_name}student_response2.question_id = ${table_name}questions.question_id AND ${table_name}student_response2.test_id = ${table_name}tests.test_id
+      LEFT JOIN ${table_name}student_scores ON ${table_name}student_scores.student_id = ${table_name}student_response2.student_id AND ${table_name}student_scores.test_id = ${table_name}tests.test_id
+      WHERE ${table_name}tests.test_id = ? AND ${table_name}student_response2.student_id = ?
       GROUP BY 
-          tests.test_id, 
-          questions.question_id, 
-          options.option_id, 
-          student_response2.student_id;
+          ${table_name}tests.test_id, 
+          ${table_name}questions.question_id, 
+          ${table_name}options.option_id, 
+          ${table_name}student_response2.student_id;
 
     `;
   
     try {
       const [rows] = await connection.query(queryStr, [test_id, student_id]);
-      console.log(rows)
       const testData = {
         test_id: rows[0]?.test_id,
         teacher_id: rows[0]?.teacher_id,
@@ -97,42 +96,7 @@ class ResultModel {
     }
 }
 
-  static async generateResult(test_id) {
-
-    const queryStr = `
-      INSERT INTO student_scores (score_id, test_id, student_id, final_score)
-        SELECT 
-            UUID(),  
-            tests.test_id,
-            student_response2.student_id,
-            SUM(
-                CASE 
-                    WHEN questions.question_type = 'NAT' AND student_response2.given_ans_text = questions.correct_option_id THEN questions.positive_marks
-                    WHEN questions.question_type = 'NAT' AND student_response2.given_ans_text != questions.correct_option_id THEN -questions.negative_marks
-                    WHEN questions.question_type IN ('MCQ', 'MSQ') AND student_response2.selected_option_id = questions.correct_option_id THEN questions.positive_marks
-                    WHEN questions.question_type IN ('MCQ', 'MSQ') AND student_response2.selected_option_id != questions.correct_option_id THEN -questions.negative_marks
-                    ELSE 0
-                END
-            ) AS total_score
-        FROM tests
-        LEFT JOIN questions ON tests.test_id = questions.test_id
-        LEFT JOIN student_response2 
-            ON questions.question_id = student_response2.question_id 
-            AND student_response2.test_id = tests.test_id
-        WHERE tests.test_id = ?
-        GROUP BY student_response2.student_id;
-    `;
-
-    try {
-      await connection.query(queryStr, [test_id]);
-      return test_id;
-    } catch (err) {
-      console.error(err);
-      throw new Error("Error calculating and storing scores for all students");
-    }
-}
-
-  static async getAllResults(test_id) {
+  static async getAllResults(table_name, test_id) {
     const queryStr = `
       SELECT 
         ss.score_id AS score_id, 
@@ -140,7 +104,7 @@ class ResultModel {
         ss.student_id AS student_id, 
         ss.final_score AS final_score, 
         u.name AS student_name
-      FROM student_scores ss
+      FROM ${table_name}student_scores ss
       JOIN users u ON ss.student_id = u.user_id
       WHERE ss.test_id = ?
       ORDER BY ss.final_score DESC;

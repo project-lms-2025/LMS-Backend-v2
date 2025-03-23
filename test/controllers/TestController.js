@@ -1,14 +1,12 @@
 import TestModel from '../models/TestModel.js';
-import TSTestModel from '../models/TSTestModel.js';
 import QuestionModel from '../models/QuestionModel.js'
 import OptionModel from '../models/OptionModel.js'
 import StudentResponseModel from '../models/StudentResponseModel.js';
-import TestSeriesModel from '../models/TestSeriesModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
     try {
-      const tests = await TestModel.getAllTests();
+      const tests = await TestModel.getAllTests(req.table_name, );
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);
@@ -18,7 +16,7 @@ class TestController {
 
   static async getAttemptedTests(req, res) {
     try {
-      const tests = await TestModel.getAttemptedTests(req.user_id);
+      const tests = await TestModel.getAttemptedTests(req.table_name, req.user_id);
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);
@@ -30,7 +28,7 @@ class TestController {
   static async getTestById(req, res) {
     const { test_id } = req.params;
     try {
-      const test = await TestModel.getTestById(test_id, req.role);
+      const test = await TestModel.getTestById(req.table_name, test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
@@ -56,8 +54,6 @@ class TestController {
 
   static async createTest(req, res){
     const examData = req.body;
-    console.log("data received at create test", examData)
-
     try {
       const { 
         title, 
@@ -70,62 +66,26 @@ class TestController {
         schedule_time, 
         totalMarks, 
         questions,
-        test_type 
       } = examData;
 
-      // Validate test type
-      if (!test_type || !['course', 'series'].includes(test_type)) {
-        return res.status(400).json({
-          message: 'Invalid test type. Must be either "course" or "series"'
-        });
-      }
-
-      // If it's a series test, validate series_id
-      if (test_type === 'series' && !series_id) {
-        return res.status(400).json({
-          message: 'series_id is required for series tests'
-        });
-      }
-
-      // If it's a course test, validate course_id
-      if (test_type === 'course' && !course_id) {
-        return res.status(400).json({
-          message: 'course_id is required for course tests'
-        });
-      }
-
-      let test;
-      if (test_type === 'course') {
-        test = await TestModel.createTest({
-          test_id,
-          teacher_id: req.user_id,
-          course_id,
-          title,
-          description,
-          schedule_date,
-          schedule_time,
-          duration,
-          total_marks: totalMarks
-        });
-      } else {
-        test = await TSTestModel.createTSTest({
-          test_id,
-          teacher_id: req.user_id,
-          series_id,
-          title,
-          description,
-          schedule_date,
-          schedule_time,
-          duration,
-          total_marks: totalMarks
-        });
-      }
-
-      console.log("test created successfully")
+      const test = await TestModel.createTest({
+        table_name: req.table_name,
+        test_id,
+        teacher_id: req.user_id,
+        course_id,
+        series_id,
+        title,
+        description,
+        schedule_date,
+        schedule_time,
+        duration,
+        total_marks: totalMarks
+      });
 
       for (let questionData of questions) {
         const { question_id, section, question_text, question_type, image_url, positive_marks, negative_marks, options, correct_option_id } = questionData;
         const question = await QuestionModel.createQuestion({
+          table_name: req.table_name, 
           question_id,
           test_id,
           question_type,
@@ -141,6 +101,7 @@ class TestController {
           const { option_id, option_text, image_url, is_correct } = optionData;
 
           await OptionModel.createOption({
+            table_name: req.table_name, 
             option_id,
             question_id,
             option_text,
@@ -149,8 +110,6 @@ class TestController {
           });
         }
       }
-
-      console.log("question and options created successfully")
 
       return res.status(201).json({
         message: 'Exam created successfully',
@@ -169,12 +128,12 @@ class TestController {
     const { test_id } = req.params;
     const updateData = req.body;
     try {
-      const test = await TestModel.getTestById(test_id, req.role);
+      const test = await TestModel.getTestById(req.table_name, test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
 
-      await TestModel.updateTest(test_id, updateData);
+      await TestModel.updateTest(req.table_name, test_id, updateData);
       res.status(200).json({ message: 'Test updated successfully' });
     } catch (error) {
       console.error(error);
@@ -186,12 +145,12 @@ class TestController {
   static async deleteTest(req, res) {
     const { test_id } = req.params;
     try {
-      const test = await TestModel.getTestById(test_id, req.role);
+      const test = await TestModel.getTestById(req.table_name, test_id, req.role);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }
 
-      await TestModel.deleteTest(test_id);
+      await TestModel.deleteTest(req.table_name, test_id);
       res.status(204).end();  // No content, indicating successful deletion
     } catch (error) {
       console.error(error);
@@ -208,7 +167,7 @@ class TestController {
       if (!responses || !Array.isArray(responses)) {
         return res.status(400).json({ error: 'Responses must be an array.' });
       }
-      await StudentResponseModel.submitResponse({ test_id, student_id, responses });
+      await StudentResponseModel.submitResponse({table_name: req.table_name,  test_id, student_id, responses });
       res.status(200).json({
         message: 'Test responses submitted successfully',
         test_id,

@@ -5,7 +5,7 @@ class OptionController {
   static async getOptionsForQuestion(req, res) {
     const { question_id } = req.params;
     try {
-      const options = await OptionModel.getOptionsByQuestionId(question_id);
+      const options = await OptionModel.getOptionsByQuestionId(req.table_name, question_id);
       res.status(200).json(options);
     } catch (error) {
       console.error(error);
@@ -17,7 +17,7 @@ class OptionController {
     try {
       const { test_id } = req.params;
 
-      const correctOptions = await OptionModel.getCorrectOptionsByTestId(test_id);
+      const correctOptions = await OptionModel.getCorrectOptionsByTestId(req.table_name, test_id);
 
       const formattedOptions = correctOptions.reduce((acc, option) => {
         acc[option.question_id] = option.option_id;
@@ -39,7 +39,7 @@ class OptionController {
     optionData.option_id = generateUniqueId();
     optionData.question_id = question_id;
     try {
-      await OptionModel.createOption(optionData);
+      await OptionModel.createOption({...optionData, table_name:req.table_name});
       res.status(201).json({ message: "Option created successfully" });
     } catch (error) {
       console.error(error);
@@ -51,7 +51,7 @@ class OptionController {
     const { option_id } = req.params;
     const updateData = req.body;
     try {
-      await OptionModel.updateOption(option_id, updateData);
+      await OptionModel.updateOption(req.table_name, option_id, updateData);
       res.status(200).json({ message: "Option updated successfully" });
     } catch (error) {
       console.error(error);
@@ -62,7 +62,7 @@ class OptionController {
   static async deleteOption(req, res) {
     const { option_id } = req.params;
     try {
-      await OptionModel.deleteOption(option_id);
+      await OptionModel.deleteOption(req.table_name, option_id);
       res.status(204).end();
     } catch (error) {
       console.error(error);

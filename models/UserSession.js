@@ -5,7 +5,6 @@ class UserSession {
   static async createOrUpdateSession(email, deviceType, token) {
     const sessionId = generateUniqueId();
     const createdAt = Date.now();
-    console.log("token from model",token)
     const query = `
       INSERT INTO user_sessions (session_id, email, device_type, token)
       VALUES (?, ?, ?, ?) 

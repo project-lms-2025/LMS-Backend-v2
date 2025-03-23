@@ -16,6 +16,7 @@ import testRoutes from "./test/testRouter.js"
 import mainRoutes from './main/mainRoutes.js'
 import userAssignmentRoutes from './routes/UserAssignmentRoutes.js'
 import testSeriesRoutes from './test/routes/testSeriesRoutes.js'
+import setTable from './middleware/setTableMIddleware.js';
 
 const app = express();
 const mainSwagger = YAML.load('./swagger.yaml');
@@ -49,7 +50,7 @@ app.use('/api/otp/', otpRoutes)
 app.use('/api/batch/', batchRoutes)
 app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
-app.use('/api/test/', testRoutes)
+app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
 app.use("/api/admin", AuthMiddleware.auth, userAssignmentRoutes);
 app.use('/api/', mainRoutes)

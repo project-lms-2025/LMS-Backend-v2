@@ -8,7 +8,6 @@ class TSTestModel {
     `;
     try {
       await connection.query(queryStr, [test_id, teacher_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks]);
-      console.log("queried the db");
       return { test_id, teacher_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks };
     } catch (err) {
       console.error(err)

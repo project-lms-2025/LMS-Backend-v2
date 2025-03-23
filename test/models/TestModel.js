@@ -1,32 +1,31 @@
 import connection from "../../config/database.js"; 
 
 class TestModel {
-  static async createTest({ test_id, teacher_id, course_id, title, description, schedule_date, schedule_time, duration, total_marks }) {
+  static async createTest({table_name, test_id, teacher_id, course_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks }) {
     const queryStr = `
-      INSERT INTO tests (test_id, teacher_id, course_id, title, description, schedule_date, schedule_time, duration, total_marks)
+      INSERT INTO ${table_name}tests (test_id, teacher_id, ${table_name == "" ? "course_id": "series_id"}, title, description, schedule_date, schedule_time, duration, total_marks)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     try {
-      await connection.query(queryStr, [test_id, teacher_id, course_id, title, description, schedule_date, schedule_time, duration, total_marks]);
-      console.log("queried the db");
-      return { test_id, teacher_id, course_id, title, description, schedule_date, schedule_time, duration, total_marks };
+      await connection.query(queryStr, [test_id, teacher_id,table_name == "" ? course_id: series_id, title, description, schedule_date, schedule_time, duration, total_marks]);
+      return { test_id, teacher_id, course_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks };
     } catch (err) {
       console.error(err)
-      throw new Error("Error creating test");
+      throw new Error(`Error creating test`);
     }
   }
 
-  static async getTestById(test_id, role) {
+  static async getTestById(table_name, test_id, role) {
     const queryStr = `
-      SELECT tests.*, 
-       questions.*, 
-       options.*, 
-       questions.image_url AS question_image_url, 
-       options.image_url AS option_image_url
-      FROM tests
-      LEFT JOIN questions ON tests.test_id = questions.test_id
-      LEFT JOIN options ON questions.question_id = options.question_id
-      WHERE tests.test_id = ?;
+      SELECT ${table_name}tests.*, 
+       ${table_name}questions.*, 
+       ${table_name}options.*, 
+       ${table_name}questions.image_url AS question_image_url, 
+       ${table_name}options.image_url AS option_image_url
+      FROM ${table_name}tests
+      LEFT JOIN ${table_name}questions ON ${table_name}tests.test_id = ${table_name}questions.test_id
+      LEFT JOIN ${table_name}options ON ${table_name}questions.question_id = ${table_name}options.question_id
+      WHERE ${table_name}tests.test_id = ?;
     `;
 
     try {
@@ -72,11 +71,11 @@ class TestModel {
       });
       return testData.questions.length > 0 ? testData : null;
     } catch (err) {
-      throw new Error("Error getting test by ID");
+      throw new Error(`Error getting test by ID`);
     }
   }
 
-  static async getAttemptedTests(studentId) {
+  static async getAttemptedTests(table_name, studentId) {
     const queryStr = `
       SELECT 
           DISTINCT
@@ -86,9 +85,9 @@ class TestModel {
           t.title,
           t.description
       FROM 
-          student_response2 sr
+          ${table_name}student_response2 sr
       JOIN 
-          tests t ON sr.test_id = t.test_id
+          ${table_name}tests t ON sr.test_id = t.test_id
       WHERE 
           sr.student_id = ?
       `;
@@ -96,42 +95,42 @@ class TestModel {
         const [rows] = await connection.query(queryStr, [studentId]);
         return rows;
       } catch (err) {
-        throw new Error("Error getting all tests");
+        throw new Error(`Error getting all ${table_name}tests`);
       }
   }
 
-  static async getAllTests() {
+  static async getAllTests(table_name) {
     const queryStr = `
-      SELECT tests.*, courses.course_name
-      FROM tests
-      JOIN courses ON tests.course_id = courses.course_id;
+      SELECT ${table_name}tests.*, courses.course_name
+      FROM ${table_name}tests
+      JOIN courses ON ${table_name}tests.course_id = courses.course_id;
     `;
     try {
       const [rows] = await connection.query(queryStr);
       return rows;
     } catch (err) {
-      throw new Error("Error getting all tests");
+      throw new Error(`Error getting all ${table_name}tests`);
     }
   }
 
-  static async updateTest(test_id, updatedFields) {
+  static async updateTest(table_name, test_id, updatedFields) {
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
-    const queryStr = `UPDATE tests SET ${updates} WHERE test_id = ?`;
+    const queryStr = `UPDATE ${table_name}tests SET ${updates} WHERE test_id = ?`;
     try {
       await connection.query(queryStr, [...Object.values(updatedFields), test_id]);
       return { test_id, ...updatedFields };
     } catch (err) {
-      throw new Error("Error updating test");
+      throw new Error(`Error updating test`);
     }
   }
 
-  static async deleteTest(test_id) {
-    const queryStr = "DELETE FROM tests WHERE test_id = ?";
+  static async deleteTest(table_name, test_id) {
+    const queryStr = `DELETE FROM ${table_name}tests WHERE test_id = ?`;
     try {
       await connection.query(queryStr, [test_id]);
       return { success: true };
     } catch (err) {
-      throw new Error("Error deleting test");
+      throw new Error(`Error deleting test`);
     }
   }
 }

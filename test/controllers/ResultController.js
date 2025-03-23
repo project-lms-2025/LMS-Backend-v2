@@ -4,7 +4,7 @@ class ResultController {
   static async getAllResults(req, res) {
     const { test_id } = req.params
     try {
-      const results = await ResultModel.getAllResults(test_id);
+      const results = await ResultModel.getAllResults(req.table_name, test_id);
       return res.json({ message: "Fetched all results successfully", results });
     } catch (err) {
       console.error(err);
@@ -16,7 +16,7 @@ class ResultController {
     const { test_id, student_id } = req.params;
 
     try {
-      const testData = await ResultModel.getDetailedResult(test_id, student_id);
+      const testData = await ResultModel.getDetailedResult(req.table_name, test_id, student_id);
       
       if (testData) {
         return res.json(testData);
@@ -33,7 +33,7 @@ class ResultController {
     const { test_id } = req.params;
 
     try {
-      await ResultModel.generateResult(test_id);
+      await ResultModel.generateResult(req.table_name, test_id);
       return res.json({ message: "Scores calculated and stored successfully", test_id });
     } catch (err) {
       console.error(err);

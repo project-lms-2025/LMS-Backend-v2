@@ -2,8 +2,7 @@ import connection from "../../config/database.js";
 import { generateUniqueId } from "../../utils/idGenerator.js";
 
 class StudentResponseModel {
-  static async submitResponse({ test_id, student_id, responses }) {
-    console.log("user responses: ", responses)
+  static async submitResponse({ table_name, test_id, student_id, responses }) {
     let totalScore = 0;
 
     for (const response of responses) {
@@ -12,7 +11,7 @@ class StudentResponseModel {
       const option_id = options_chosen.sort().join('_');
       const response_id = generateUniqueId();
       const queryStr = `
-        INSERT INTO student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
+        INSERT INTO ${table_name}student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
         VALUES (?, ?, ?, ?, ?, ?)
       `;
       
@@ -32,7 +31,6 @@ class StudentResponseModel {
 
           `, [question_id]);
         const { question_type,option_text, correct_option_id, positive_marks, negative_marks } = question[0];
-        console.log({question_type,option_text, correct_option_id, positive_marks, negative_marks})
         if (question_type === 'NAT') {
           if (response_text === option_text) {
             totalScore += positive_marks;
@@ -48,7 +46,7 @@ class StudentResponseModel {
         }
       } catch (err) {
         console.error(err);
-        throw new Error("Error inserting response");
+        throw new Error(`Error inserting response`);
       }
     }
 
@@ -62,40 +60,40 @@ class StudentResponseModel {
       await connection.query(scoreQueryStr, [score_id, test_id, student_id, totalScore, totalScore]);
     } catch (err) {
       console.error(err);
-      throw new Error("Error updating student score");
+      throw new Error(`Error updating student score`);
     }
 
     return { message: 'Responses inserted and score updated successfully' };
   }
 
-  static async getResponsesByTestId(test_id) {
-    const queryStr = "SELECT * FROM student_response2 WHERE student_id = ?";
+  static async getResponsesByTestId(table_name, test_id) {
+    const queryStr = `SELECT * FROM ${table_name}student_response2 WHERE student_id = ?`;
     try {
       const [rows] = await connection.query(queryStr, [test_id]);
       return rows;
     } catch (err) {
-      throw new Error("Error getting responses by test ID");
+      throw new Error(`Error getting responses by test ID`);
     }
   }
 
-  static async updateResponse(response_id, updatedFields) {
+  static async updateResponse(table_name, response_id, updatedFields) {
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
-    const queryStr = `UPDATE student_response2 SET ${updates} WHERE response_id = ?`;
+    const queryStr = `UPDATE ${table_name}student_response2 SET ${updates} WHERE response_id = ?`;
     try {
       await connection.query(queryStr, [...Object.values(updatedFields), response_id]);
       return { response_id, ...updatedFields };
     } catch (err) {
-      throw new Error("Error updating response");
+      throw new Error(`Error updating response`);
     }
   }
 
-  static async deleteResponse(response_id) {
-    const queryStr = "DELETE FROM student_response2 WHERE response_id = ?";
+  static async deleteResponse(table_name, response_id) {
+    const queryStr = `DELETE FROM ${table_name}student_response2 WHERE response_id = ?`;
     try {
       await connection.query(queryStr, [response_id]);
       return { success: true };
     } catch (err) {
-      throw new Error("Error deleting response");
+      throw new Error(`Error deleting response`);
     }
   }
 }
