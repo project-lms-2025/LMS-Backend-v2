@@ -1,5 +1,6 @@
 import connection from "../../config/database.js"; 
 import { generateUniqueId } from "../../utils/idGenerator.js";
+import markingSchemes from "../../utils/markingSchemes.js";
 
 class StudentResponseModel {
   static async submitResponse({ table_name, test_id, student_id, responses }) {
@@ -31,18 +32,25 @@ class StudentResponseModel {
 
           `, [question_id]);
         const { question_type,option_text, correct_option_id, positive_marks, negative_marks } = question[0];
-        if (question_type === 'NAT') {
-          if (response_text === option_text) {
-            totalScore += positive_marks;
-          } else {
-            totalScore -= negative_marks;
-          }
-        } else if (question_type === 'MCQ' || question_type === 'MSQ') {
-          if (option_id === correct_option_id) {
-            totalScore += positive_marks;
-          } else {
-            totalScore -= negative_marks;
-          }
+        // if (question_type === 'NAT') {
+        //   totalScore += markingSchemes.GATE.NAT(response_text, option_text, positive_marks, negative_marks);
+        //   // if (response_text === option_text) {
+        //   //   totalScore += positive_marks;
+        //   // } else {
+        //   //   totalScore -= negative_marks;
+        //   // }
+        // } else if (question_type === 'MCQ' || question_type === 'MSQ') {
+        //   totalScore += markingSchemes.GATE.MCQorMSQ(option_id, correct_option_id, positive_marks, negative_marks);
+        //   // if (option_id === correct_option_id) {
+        //   //   totalScore += positive_marks;
+        //   // } else {
+        //   //   totalScore -= negative_marks;
+        //   // }
+        // }
+        const testType = 'GATE';
+        const markingFunction = this.getMarkingFunction(testType, question_type);
+        if (markingFunction) {
+          totalScore += markingFunction(option_id, correct_option_id, response_text, option_text, positive_marks, negative_marks);
         }
       } catch (err) {
         console.error(err);
@@ -94,6 +102,14 @@ class StudentResponseModel {
       return { success: true };
     } catch (err) {
       throw new Error(`Error deleting response`);
+    }
+  }
+
+  static getMarkingFunction(testType, questionType) {
+    if (markingSchemes[testType] && markingSchemes[testType][questionType]) {
+      return markingSchemes[testType][questionType];
+    } else {
+      throw new Error(`Marking scheme for ${testType} and ${questionType} not found`);
     }
   }
 }

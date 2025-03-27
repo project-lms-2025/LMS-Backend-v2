@@ -14,9 +14,9 @@ import courseRoutes from "./routes/CourseRoutes.js"
 import classRoutes from "./routes/ClassRoutes.js"
 import testRoutes from "./test/testRouter.js"
 import mainRoutes from './main/mainRoutes.js'
-import userAssignmentRoutes from './routes/UserAssignmentRoutes.js'
 import testSeriesRoutes from './test/routes/testSeriesRoutes.js'
 import setTable from './middleware/setTableMIddleware.js';
+import enrollmentroutes from './routes/EnrollmentRoutes.js';
 
 const app = express();
 const mainSwagger = YAML.load('./swagger.yaml');
@@ -52,7 +52,7 @@ app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
 app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
-app.use("/api/admin", AuthMiddleware.auth, userAssignmentRoutes);
+app.use('/api/enrollment', enrollmentroutes)
 app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{
   return res.json({message: "this is the home of teachertech test api"})
