@@ -4,9 +4,10 @@ import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
 
 class EnrollmentController {
   static async enrollUser(req, res) {
-    const { user_id, batch_id, payment_amount, payment_status, enrollment_type } = req.body;
+    const { batch_id, payment_amount, payment_status, enrollment_type } = req.body;
 
     try {
+      const user_id = req.user_id;
       const userResponse = await UserModel.getUserById(user_id);
       if (!userResponse.success) {
         return res.status(404).json({ success: false, message: 'User not found' });
@@ -41,6 +42,30 @@ class EnrollmentController {
       return res.status(500).json({ success: false, message: 'An error occurred during enrollment' });
     }
   }
+
+  static async getEnrolledBatch(req, res) {
+    const user_id = req.user_id;
+
+    try {
+      // Check if user exists
+      const userResponse = await UserModel.getUserById(user_id);
+      if (!userResponse.success) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      // Get all batches the user is enrolled in
+      const enrolledBatchesResponse = await BatchEnrollmentModel.getEnrollmentByUserId(user_id);
+      if (!enrolledBatchesResponse.success || enrolledBatchesResponse.data.length === 0) {
+        return res.status(404).json({ success: false, message: 'User is not enrolled in any batch' });
+      }
+
+      return res.status(200).json({ success: true, data: enrolledBatchesResponse.data });
+    } catch (error) {
+      console.error('Error fetching enrolled batches:', error);
+      return res.status(500).json({ success: false, message: 'An error occurred while retrieving the batches' });
+    }
+  }
+
 }
 
 export default EnrollmentController;

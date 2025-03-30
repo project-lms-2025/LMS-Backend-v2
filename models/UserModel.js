@@ -99,7 +99,7 @@ class UserModel {
     const query = 'SELECT * FROM users WHERE phoneNumber = ?';
     try {
       const results = await this.queryDatabase(query, [phoneNumber]);
-      return results.length ? { success: true, ...results[0] } : { success: false, message: "User not found" };
+      return results.length ? { success: true, data: results[0] } : { success: false, message: "User not found" };
     } catch (err) {
       console.error(err.message);
       return { success: false, message: err.message || 'Error fetching user' };

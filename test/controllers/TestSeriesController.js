@@ -66,7 +66,7 @@ class TestSeriesController {
     const { series_id, test_id } = req.params;
     try {
       const test = await TSTestModel.getTSTestById(test_id, req.role);
-      console.log(test);
+      (test);
       if (!test) {
         return res.status(404).json({ error: 'Test not found' });
       }

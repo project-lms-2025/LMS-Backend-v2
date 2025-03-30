@@ -105,7 +105,7 @@ class authController {
         return res.status(400).json({ success: false, message: "User not found" });
       }
 
-      const sessionResult = await this.createSessionService(userResponse.data.user_id, email, deviceType, userResponse.data.role);
+      const sessionResult = await authController.createSessionService(userResponse.data.user_id, email, deviceType, userResponse.data.role);
   
       if (sessionResult.statusCode === 200) {
         return res.status(200).json({ success: true, message: "Login successful", authToken: sessionResult.token, role: userResponse.data.role });

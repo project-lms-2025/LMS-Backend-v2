@@ -77,6 +77,17 @@ class CourseModel {
       return { success: false, message: err.message || 'Error deleting course' };
     }
   }
+
+  static async getCoursesByBatchIds(batch_ids) {
+    const query = 'SELECT DISTINCT * FROM courses WHERE batch_id IN (?)';
+    try {
+      const result = await this.queryDatabase(query, [batch_ids]);
+      return result; // Return the list of courses that match the batch IDs
+    } catch (error) {
+      console.error('Error fetching courses by batch IDs:', error);
+      throw new Error('Error fetching courses');
+    }
+  }
 }
 
 export default CourseModel;

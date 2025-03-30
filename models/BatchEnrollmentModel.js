@@ -31,12 +31,21 @@ class BatchEnrollmentModel {
   }
 
   static async getEnrollmentByUserId(user_id) {
-    const query = `SELECT * FROM batch_enrollments WHERE user_id = ?`;
     try {
-      const [results] = await connection.query(query, [user_id]);
-      return results.length ? { success: true, data: results } : { success: false, message: 'No enrollments found for this user' };
-    } catch (err) {
-      return { success: false, message: err.message || 'Error fetching enrollment details' };
+      const result = await connection.query(
+        `
+        SELECT b.*
+        FROM batch_enrollments be
+        JOIN batches b ON be.batch_id = b.batch_id
+        WHERE be.user_id = ?
+        `,
+        [user_id]
+      );
+      ('Enrolled batches:', result[0]);
+      return { success: true, data: result[0] };  // Returning the result as an array of batches
+    } catch (error) {
+      console.error('Error fetching enrolled batches:', error);
+      return { success: false, message: 'Error fetching enrolled batches' };
     }
   }
 

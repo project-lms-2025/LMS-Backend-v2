@@ -1,3 +1,5 @@
+import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
+import CourseModel from '../models/CourseModel.js';
 import CourseService from '../services/CourseService.js';
 
 class CourseController {
@@ -64,6 +66,32 @@ class CourseController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Failed to delete course' });
+        }
+    }
+
+    static async getEnrolledCourses(req, res) {
+        try {
+            const user_id = req.user_id;
+
+            // Fetch batch IDs that the user is enrolled in
+            const batchEnrollments = await BatchEnrollmentModel.getEnrollmentByUserId(user_id);
+            console.log("these are batch enrollments",batchEnrollments);
+            if (!batchEnrollments || batchEnrollments.length === 0) {
+                return res.status(404).json({ error: 'User is not enrolled in any batches' });
+            }
+
+            // Extract batch IDs
+            const batchIds = batchEnrollments.data.map(enrollment => enrollment.batch_id);
+            // Fetch courses by batch IDs
+            const courses = await CourseModel.getCoursesByBatchIds(batchIds);
+            if (courses.length === 0) {
+                return res.status(404).json({ error: 'No courses found for the enrolled batches' });
+            }
+
+            res.status(200).json({success: true, message: 'Fetched Courses successfully', data: courses });;
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Failed to fetch enrolled courses' });
         }
     }
 }

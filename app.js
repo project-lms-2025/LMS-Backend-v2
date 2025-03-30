@@ -17,10 +17,9 @@ import mainRoutes from './main/mainRoutes.js'
 import testSeriesRoutes from './test/routes/testSeriesRoutes.js'
 import setTable from './middleware/setTableMIddleware.js';
 import enrollmentroutes from './routes/EnrollmentRoutes.js';
+import swaggerSpec from './config/swagger.js';
 
 const app = express();
-const mainSwagger = YAML.load('./swagger.yaml');
-const testSwagger = YAML.load('./test/swagger.yaml');
 
 app.use(cors({
     origin: ["http://127.0.0.1:5173", "http://localhost:5173", "https://lmssystem01.vercel.app/", "https://www.teachertech.in"], 
@@ -35,14 +34,7 @@ app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// swagger setup
-app.use('/main-docs', swaggerUi.serve, (req, res) => {
-  return swaggerUi.setup(mainSwagger)(req, res);
-});
-
-app.use('/test-docs', swaggerUi.serve, (req, res) => {
-  return swaggerUi.setup(testSwagger)(req, res);
-});
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', AuthMiddleware.auth, userRoutes);
@@ -52,7 +44,7 @@ app.use('/api/course/', courseRoutes)
 app.use('/api/class/', classRoutes)
 app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
-app.use('/api/enrollment', enrollmentroutes)
+app.use('/api/enrollment', AuthMiddleware.auth, enrollmentroutes)
 app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{
   return res.json({message: "this is the home of teachertech test api"})

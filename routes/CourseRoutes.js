@@ -6,6 +6,7 @@ import RoleMiddleware from '../middleware/RoleMiddleware.js';
 
 router.post('/', AuthMiddleware.auth,await RoleMiddleware.checkRole(["admin", "teacher"]), CourseController.createCourse);
 router.get('/courses', AuthMiddleware.auth,await RoleMiddleware.checkRole(["admin", "teacher"]), CourseController.getAllCourses);
+router.get('/enrolled-courses', AuthMiddleware.auth, CourseController.getEnrolledCourses);
 router.get('/:course_id', CourseController.getCourse);
 router.get('/batch/:batch_id', CourseController.getCoursesByBatchId);
 router.put('/:course_id', AuthMiddleware.auth,await RoleMiddleware.checkRole(["admin", "teacher"]), CourseController.updateCourse);
