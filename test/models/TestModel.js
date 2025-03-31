@@ -133,6 +133,27 @@ class TestModel {
       throw new Error(`Error deleting test`);
     }
   }
+
+  static async getEnrolledTests(user_id) {
+    const query = `
+      SELECT DISTINCT t.*
+        FROM tests t
+        JOIN courses c ON t.course_id = c.course_id
+        WHERE c.batch_id IN (
+            SELECT b.batch_id
+            FROM batch_enrollments be
+            JOIN batches b ON be.batch_id = b.batch_id
+            WHERE be.user_id = ?
+        );
+    `;
+    try {
+      const result = await connection.query(query, [user_id]);
+      return result[0]; // Return the list of courses that match the batch IDs
+    } catch (error) {
+      console.error('Error fetching courses by batch IDs:', error);
+      throw new Error('Error fetching courses');
+    }
+  }
 }
 
 export default TestModel;

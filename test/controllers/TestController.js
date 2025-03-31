@@ -6,7 +6,7 @@ import StudentResponseModel from '../models/StudentResponseModel.js';
 class TestController {
   static async getAllTests(req, res) {
     try {
-      const tests = await TestModel.getAllTests(req.table_name, );
+      const tests = await TestModel.getAllTests(req.table_name);
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);
@@ -33,6 +33,19 @@ class TestController {
         return res.status(404).json({ error: 'Test not found' });
       }
       res.status(200).json(test);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to fetch the test' });
+    }
+  }
+
+  static async getEnrolledTests(req, res) {
+    try {
+      const tests = await TestModel.getEnrolledTests(req.user_id);
+      if (!tests) {
+        return res.status(404).json({ error: 'No tests added' });
+      }
+      res.status(200).json(tests);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch the test' });

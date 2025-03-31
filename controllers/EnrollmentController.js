@@ -4,7 +4,8 @@ import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
 
 class EnrollmentController {
   static async enrollUser(req, res) {
-    const { batch_id, payment_amount, payment_status, enrollment_type } = req.body;
+    const { batch_id, payment_id, enrollment_type } = req.body;
+    console.log('Enrollment request body:', req.body);
 
     try {
       const user_id = req.user_id;
@@ -18,13 +19,12 @@ class EnrollmentController {
         return res.status(404).json({ success: false, message: 'Batch not found' });
       }
 
+      if(!payment_id) {
+        return res.status(400).json({ success: false, message: 'Payment ID is required' });
+      }
       // if(payment_amount !== batchResponse.data.batch_price) {
       //   return res.status(400).json({ success: false, message: 'Payment amount does not match batch price' });
       // }
-
-      if (payment_status !== 'successful') {
-        return res.status(400).json({ success: false, message: 'Payment failed' });
-      }
 
       const enrollmentResponse = await BatchEnrollmentModel.enrollUser({ 
         user_id, 
