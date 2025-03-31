@@ -18,6 +18,7 @@ import testSeriesRoutes from './test/routes/testSeriesRoutes.js'
 import setTable from './middleware/setTableMIddleware.js';
 import enrollmentroutes from './routes/EnrollmentRoutes.js';
 import swaggerSpec from './config/swagger.js';
+import paymentRoutes from './razorpay/routes.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/class/', classRoutes)
 app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
 app.use('/api/enrollment', AuthMiddleware.auth, enrollmentroutes)
+app.use('/api/payment/', AuthMiddleware.auth, paymentRoutes)
 app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{
   return res.json({message: "this is the home of teachertech test api"})
