@@ -75,7 +75,6 @@ class CourseController {
 
             // Fetch batch IDs that the user is enrolled in
             const batchEnrollments = await BatchEnrollmentModel.getEnrollmentByUserId(user_id);
-            console.log("these are batch enrollments",batchEnrollments);
             if (!batchEnrollments || batchEnrollments.length === 0) {
                 return res.status(404).json({ error: 'User is not enrolled in any batches' });
             }

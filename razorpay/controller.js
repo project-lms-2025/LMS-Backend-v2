@@ -6,7 +6,6 @@ const router = express.Router();
 class RazorPayController{
     static async createOrder(req, res) {
         const { amount, currency } = req.body;
-        console.log(req.body);
 
         try {
             const options = {

@@ -73,6 +73,8 @@ class authController {
       OtpService.saveOtp(email, otp, otpExpiry);
   
       await EmailService.sendEmailService(email, "emailLogin", otp);
+      console.log("OTP sent to email:", email);
+      console.log("Generated OTP:", otp);
   
       return res.status(200).json({ success: true, message: "OTP sent to your email", email: email });
     } catch (error) {

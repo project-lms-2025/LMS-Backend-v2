@@ -5,7 +5,6 @@ import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
 class EnrollmentController {
   static async enrollUser(req, res) {
     const { batch_id, payment_id, enrollment_type } = req.body;
-    console.log('Enrollment request body:', req.body);
 
     try {
       const user_id = req.user_id;
