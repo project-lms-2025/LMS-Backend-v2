@@ -72,7 +72,7 @@ class authController {
   
       OtpService.saveOtp(email, otp, otpExpiry);
   
-      // await EmailService.sendEmailService(email, "emailLogin", otp);
+      await EmailService.sendEmailService(email, "emailLogin", otp);
       console.log("OTP sent to email:", email);
       console.log("Generated OTP:", otp);
   
