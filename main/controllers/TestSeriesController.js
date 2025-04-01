@@ -1,5 +1,4 @@
 import TestSeriesModel from '../models/TestSeriesModel.js';
-import TSTestModel from '../models/TSTestModel.js';
 
 class TestSeriesController {
   static async createTestSeries(req, res) {
@@ -51,32 +50,17 @@ class TestSeriesController {
     }
   }
 
-  static async getTestsInSeries(req, res) {
-    const { series_id } = req.params;
+  static async getEnrolledTestSeries(req, res) {
     try {
-      const tests = await TSTestModel.getAllTSTests(series_id);
-      res.status(200).json(tests);
+      const user_id = req.user_id;
+      const enrolledSeries = await TestSeriesModel.getUserEnrolledTestSeries(user_id);
+      if (!enrolledSeries.length) {
+        return res.status(404).json({ error: 'No enrolled test series found' });
+      }
+      res.status(200).json(enrolledSeries);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Failed to fetch tests in series' });
-    }
-  }
-
-  static async getTestInSeries(req, res) {
-    const { series_id, test_id } = req.params;
-    try {
-      const test = await TSTestModel.getTSTestById(test_id, req.role);
-      (test);
-      if (!test) {
-        return res.status(404).json({ error: 'Test not found' });
-      }
-      if (test.series_id !== series_id) {
-        return res.status(400).json({ error: 'Test does not belong to this series' });
-      }
-      res.status(200).json(test);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Failed to fetch the test' });
+      res.status(500).json({ error: 'Failed to fetch enrolled test series' });
     }
   }
 
@@ -106,7 +90,7 @@ class TestSeriesController {
       }
 
       await TestSeriesModel.deleteTestSeries(series_id);
-      res.status(204).end();  // No content, indicating successful deletion
+      res.status(204).end();
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to delete the test series' });

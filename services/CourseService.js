@@ -1,5 +1,5 @@
 import { generateUniqueId } from '../utils/idGenerator.js';
-import CourseModel from "../models/CourseModel.js"
+import CourseModel from "../main/models/CourseModel.js"
 
 class CourseService {
     static async createCourse(teacher_id, batch_id, course_name, allow_notes_download) {

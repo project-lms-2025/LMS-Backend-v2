@@ -3,7 +3,7 @@ import { generateUniqueId } from "../../utils/idGenerator.js";
 import markingSchemes from "../../utils/markingSchemes.js";
 
 class StudentResponseModel {
-  static async submitResponse({ table_name, test_id, student_id, responses }) {
+  static async submitResponse({ test_id, student_id, responses }) {
     let totalScore = 0;
 
     const conn = await connection.getConnection();  // Get connection from the pool
@@ -11,17 +11,17 @@ class StudentResponseModel {
 
     try {
       for (const response of responses) {
-        const { question_id, options_chosen, response_text } = response;
+        const { question_id, options_chosen, response_text, response_time } = response;
         
-        const option_id = options_chosen.sort().join('_');
+        const selected_option_ids = options_chosen.sort().join('_');
         const response_id = generateUniqueId();
         const queryStr = `
-          INSERT INTO ${table_name}student_response2 (response_id, student_id, question_id, selected_option_id, given_ans_text, test_id)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO student_responses (response_id, student_id, question_id, selected_option_ids, given_answer, test_id, response_time)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         
         // Insert the student response
-        await conn.query(queryStr, [response_id, student_id, question_id, option_id || null, response_text || null, test_id]);
+        await conn.query(queryStr, [response_id, student_id, question_id, selected_option_ids || null, response_text || null, test_id, response_time]);
 
         const [question] = await conn.query(`
           SELECT q.question_type, 
@@ -41,21 +41,18 @@ class StudentResponseModel {
         const markingFunction = this.getMarkingFunction(testType, question_type);
 
         if (markingFunction) {
-          totalScore += markingFunction({option_id, correct_option_id, response_text, option_text, positive_marks, negative_marks});
+          totalScore += markingFunction({selected_option_ids, correct_option_id, response_text, option_text, positive_marks, negative_marks});
         }
       }
 
-      // throw new Error('Simulated error for testing rollback');
-
       const score_id = generateUniqueId();
       const scoreQueryStr = `
-        INSERT INTO student_scores (score_id, test_id, student_id, final_score)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE final_score = ?;
+        INSERT INTO student_scores (score_id, student_id, test_id, raw_score)
+        VALUES (?, ?, ?, ?);
       `;
 
       // Insert or update the student's score
-      await conn.query(scoreQueryStr, [score_id, test_id, student_id, totalScore, totalScore]);
+      await conn.query(scoreQueryStr, [score_id, student_id, test_id, totalScore]);
 
       // Commit the transaction if everything goes well
       await conn.commit();
@@ -70,10 +67,10 @@ class StudentResponseModel {
     }
   }
 
-  static async getResponsesByTestId(table_name, test_id) {
+  static async getResponsesByTestId(test_id) {
     const conn = await connection.getConnection();
     try {
-      const queryStr = `SELECT * FROM ${table_name}student_response2 WHERE test_id = ?`;
+      const queryStr = `SELECT * FROM student_responses WHERE test_id = ?`;
       const [rows] = await conn.query(queryStr, [test_id]);
       return rows;
     } catch (err) {
@@ -83,10 +80,10 @@ class StudentResponseModel {
     }
   }
 
-  static async updateResponse(table_name, response_id, updatedFields) {
+  static async updateResponse(response_id, updatedFields) {
     const conn = await connection.getConnection();
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
-    const queryStr = `UPDATE ${table_name}student_response2 SET ${updates} WHERE response_id = ?`;
+    const queryStr = `UPDATE student_responses SET ${updates} WHERE response_id = ?`;
 
     try {
       await conn.query(queryStr, [...Object.values(updatedFields), response_id]);
@@ -98,9 +95,9 @@ class StudentResponseModel {
     }
   }
 
-  static async deleteResponse(table_name, response_id) {
+  static async deleteResponse(response_id) {
     const conn = await connection.getConnection();
-    const queryStr = `DELETE FROM ${table_name}student_response2 WHERE response_id = ?`;
+    const queryStr = `DELETE FROM student_responses WHERE response_id = ?`;
 
     try {
       await conn.query(queryStr, [response_id]);

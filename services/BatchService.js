@@ -1,4 +1,4 @@
-import BatchModel from '../models/BatchModel.js';
+import BatchModel from '../main/models/BatchModel.js';
 import { generateUniqueId } from '../utils/idGenerator.js';
 
 class BatchService {

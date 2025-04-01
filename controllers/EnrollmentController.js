@@ -1,5 +1,5 @@
 import UserModel from '../models/UserModel.js';
-import BatchModel from '../models/BatchModel.js';
+import BatchModel from '../main/models/BatchModel.js';
 import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
 
 class EnrollmentController {

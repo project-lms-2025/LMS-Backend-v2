@@ -47,20 +47,20 @@ class UserModel {
       await connection.beginTransaction();
 
       await this.queryDatabase(userQuery, [user_id, name, email, phoneNumber, role]);
-      await this.queryDatabase(userDetailsQuery, [
-        user_id,
-        address,
-        state,
-        city,
-        pincode,
-        userClass || null,
-        dob,
-        selected_exam,
-        tenth_marksheet_url || null,
-        twelfth_marksheet_url || null,
-        graduation_url || null,
-        prev_year_grade_card_url || null
-      ]);
+      // await this.queryDatabase(userDetailsQuery, [
+      //   user_id,
+      //   address,
+      //   state,
+      //   city,
+      //   pincode,
+      //   userClass || null,
+      //   dob,
+      //   selected_exam,
+      //   tenth_marksheet_url || null,
+      //   twelfth_marksheet_url || null,
+      //   graduation_url || null,
+      //   prev_year_grade_card_url || null
+      // ]);
 
       await connection.commit();
       return { success: true, message: "User and user details created successfully", data: user_id };

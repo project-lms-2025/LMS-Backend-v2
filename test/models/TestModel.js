@@ -1,43 +1,51 @@
-import connection from "../../config/database.js"; 
+import connection from "../../config/database.js";
 
 class TestModel {
-  static async createTest({table_name, test_id, teacher_id, course_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks }) {
+  static async createTest({ test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type }) {
     const queryStr = `
-      INSERT INTO ${table_name}tests (test_id, teacher_id, ${table_name == "" ? "course_id": "series_id"}, title, description, schedule_date, schedule_time, duration, total_marks)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tests (test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+
     try {
-      await connection.query(queryStr, [test_id, teacher_id,table_name == "" ? course_id: series_id, title, description, schedule_date, schedule_time, duration, total_marks]);
-      return { test_id, teacher_id, course_id, series_id, title, description, schedule_date, schedule_time, duration, total_marks };
+      await connection.query(queryStr, [
+        test_id, teacher_id, course_id || null, series_id || null, title, description, schedule_start, schedule_end, duration, total_marks, test_type
+      ]);
+      return { test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type };
     } catch (err) {
-      console.error(err)
-      throw new Error(`Error creating test`);
+      console.error(err);
+      throw new Error("Error creating test");
     }
   }
 
-  static async getTestById(table_name, test_id, role) {
+  static async getTestById(test_id, role) {
     const queryStr = `
-      SELECT ${table_name}tests.*, 
-       ${table_name}questions.*, 
-       ${table_name}options.*, 
-       ${table_name}questions.image_url AS question_image_url, 
-       ${table_name}options.image_url AS option_image_url
-      FROM ${table_name}tests
-      LEFT JOIN ${table_name}questions ON ${table_name}tests.test_id = ${table_name}questions.test_id
-      LEFT JOIN ${table_name}options ON ${table_name}questions.question_id = ${table_name}options.question_id
-      WHERE ${table_name}tests.test_id = ?;
+      SELECT 
+        t.*, 
+        q.*, 
+        o.*, 
+        q.image_url AS question_image_url, 
+        o.image_url AS option_image_url
+      FROM tests t
+      LEFT JOIN questions q ON t.test_id = q.test_id
+      LEFT JOIN options o ON q.question_id = o.question_id
+      WHERE t.test_id = ?;
     `;
-
+    
     try {
       const [rows] = await connection.query(queryStr, [test_id]);
+      if (rows.length === 0) return null;
+
       const testData = {
         test_id: rows[0]?.test_id,
         teacher_id: rows[0]?.teacher_id,
         course_id: rows[0]?.course_id,
+        series_id: rows[0]?.series_id,
+        test_type: rows[0]?.test_type,
         title: rows[0]?.title,
         description: rows[0]?.description,
-        schedule_date: rows[0]?.schedule_date,
-        schedule_time: rows[0]?.schedule_time,
+        schedule_start: rows[0]?.schedule_start,
+        schedule_end: rows[0]?.schedule_end,
         duration: rows[0]?.duration,
         total_marks: rows[0]?.total_marks,
         created_at: rows[0]?.created_at,
@@ -67,91 +75,103 @@ class TestModel {
             image_url: row.option_image_url,
             ...(role !== 'student' ? { is_correct: row.is_correct } : {})
           });
-        }        
+        }
       });
-      return testData.questions.length > 0 ? testData : null;
+
+      return testData;
     } catch (err) {
-      throw new Error(`Error getting test by ID`);
+      console.error(err);
+      throw new Error("Error fetching test by ID");
     }
   }
 
-  static async getAttemptedTests(table_name, studentId) {
+  static async getAttemptedTests(studentId) {
     const queryStr = `
-      SELECT 
-          DISTINCT
-          sr.test_id,
-          t.schedule_date,
-          t.schedule_time,
-          t.title,
-          t.description
-      FROM 
-          ${table_name}student_response2 sr
-      JOIN 
-          ${table_name}tests t ON sr.test_id = t.test_id
-      WHERE 
-          sr.student_id = ?
-      `;
-      try {
-        const [rows] = await connection.query(queryStr, [studentId]);
-        return rows;
-      } catch (err) {
-        throw new Error(`Error getting all ${table_name}tests`);
-      }
+      SELECT DISTINCT
+        sr.test_id,
+        t.schedule_start,
+        t.schedule_end,
+        t.title,
+        t.description,
+        t.test_type
+      FROM student_responses sr
+      JOIN tests t ON sr.test_id = t.test_id
+      WHERE sr.student_id = ?;
+    `;
+
+    try {
+      const [rows] = await connection.query(queryStr, [studentId]);
+      return rows;
+    } catch (err) {
+      console.error(err);
+      throw new Error("Error fetching attempted tests");
+    }
   }
 
-  static async getAllTests(table_name) {
+  static async getAllTests() {
     const queryStr = `
-      SELECT ${table_name}tests.*, courses.course_name
-      FROM ${table_name}tests
-      JOIN courses ON ${table_name}tests.course_id = courses.course_id;
+      SELECT t.*, 
+             c.course_name, 
+             s.title AS series_title
+      FROM tests t
+      LEFT JOIN courses c ON t.course_id = c.course_id
+      LEFT JOIN test_series s ON t.series_id = s.series_id;
     `;
+
     try {
       const [rows] = await connection.query(queryStr);
       return rows;
     } catch (err) {
-      throw new Error(`Error getting all ${table_name}tests`);
+      console.error(err);
+      throw new Error("Error fetching all tests");
     }
   }
 
-  static async updateTest(table_name, test_id, updatedFields) {
-    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
-    const queryStr = `UPDATE ${table_name}tests SET ${updates} WHERE test_id = ?`;
+  static async updateTest(test_id, updatedFields) {
+    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(", ");
+    const queryStr = `UPDATE tests SET ${updates} WHERE test_id = ?`;
+
     try {
       await connection.query(queryStr, [...Object.values(updatedFields), test_id]);
       return { test_id, ...updatedFields };
     } catch (err) {
-      throw new Error(`Error updating test`);
+      console.error(err);
+      throw new Error("Error updating test");
     }
   }
 
-  static async deleteTest(table_name, test_id) {
-    const queryStr = `DELETE FROM ${table_name}tests WHERE test_id = ?`;
+  static async deleteTest(test_id) {
+    const queryStr = `DELETE FROM tests WHERE test_id = ?`;
+
     try {
       await connection.query(queryStr, [test_id]);
       return { success: true };
     } catch (err) {
-      throw new Error(`Error deleting test`);
+      console.error(err);
+      throw new Error("Error deleting test");
     }
   }
 
   static async getEnrolledTests(user_id) {
     const query = `
       SELECT DISTINCT t.*
-        FROM tests t
-        JOIN courses c ON t.course_id = c.course_id
-        WHERE c.batch_id IN (
-            SELECT b.batch_id
-            FROM batch_enrollments be
-            JOIN batches b ON be.batch_id = b.batch_id
-            WHERE be.user_id = ?
-        );
+      FROM tests t
+      LEFT JOIN courses c ON t.course_id = c.course_id
+      LEFT JOIN test_series s ON t.series_id = s.series_id
+      WHERE (c.batch_id IN (
+          SELECT b.batch_id
+          FROM enrollments be
+          JOIN batches b ON be.entity_id = b.batch_id
+          WHERE be.user_id = ?
+      ) OR s.series_id IS NOT NULL);
     `;
+
     try {
-      const result = await connection.query(query, [user_id]);
-      return result[0]; // Return the list of courses that match the batch IDs
+      const [result] = await connection.query(query, [user_id]);
+      return result;
     } catch (error) {
-      console.error('Error fetching courses by batch IDs:', error);
-      throw new Error('Error fetching courses');
+      console.error("Error fetching enrolled tests:", error);
+      throw new Error("Error fetching enrolled tests");
     }
   }
 }

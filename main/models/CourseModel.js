@@ -1,4 +1,4 @@
-import pool from "../config/databasePool.js";
+import pool from "../../config/databasePool.js";
 
 class CourseModel {
   static async queryDatabase(query, params) {
@@ -16,10 +16,10 @@ class CourseModel {
   }
 
   static async createCourse(course) {
-    const { course_id, teacher_id, course_name, allow_notes_dov, batch_id } = course;
-    const query = 'INSERT INTO courses (course_id, teacher_id, course_name, allow_notes_dov, batch_id) VALUES (?, ?, ?, ?, ?)';
+    const { course_id, teacher_id, course_name, allow_notes_download, batch_id } = course;
+    const query = 'INSERT INTO courses (course_id, teacher_id, course_name, allow_notes_download, batch_id) VALUES (?, ?, ?, ?, ?)';
     try {
-      await this.queryDatabase(query, [course_id, teacher_id, course_name, allow_notes_dov, batch_id]);
+      await this.queryDatabase(query, [course_id, teacher_id, course_name, allow_notes_download, batch_id]);
       return { success: true, message: 'Course created successfully', data: course };
     } catch (err) {
       return { success: false, message: err.message || 'Error creating course' };

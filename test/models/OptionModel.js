@@ -1,9 +1,9 @@
 import connection from "../../config/database.js"; 
 
 class OptionModel {
-  static async createOption({table_name, option_id, question_id, option_text, image_url = null, is_correct }) {
+  static async createOption({option_id, question_id, option_text, image_url = null, is_correct }) {
     const queryStr = `
-      INSERT INTO ${table_name}options (option_id, question_id, option_text, image_url, is_correct)
+      INSERT INTO options (option_id, question_id, option_text, image_url, is_correct)
       VALUES (?, ?, ?, ?, ?)
     `;
     try {
@@ -15,9 +15,9 @@ class OptionModel {
     }
   }
 
-  static async getOptionById(table_name, option_id) {
+  static async getOptionById(option_id) {
     try {
-      const [rows] = await connection.query(`SELECT * FROM ${table_name}options WHERE option_id = ?`, [option_id]);
+      const [rows] = await connection.query(`SELECT * FROM options WHERE option_id = ?`, [option_id]);
       return rows[0] || null;
     } catch (err) {
       console.error(`Error getting option by ID:`, err);
@@ -25,30 +25,30 @@ class OptionModel {
     }
   }
 
-  static async getOptionsByQuestionId(table_name, question_id) {
+  static async getOptionsByQuestionId(question_id) {
     try {
-      const [rows] = await connection.query(`SELECT * FROM ${table_name}options WHERE question_id = ?`, [question_id]);
+      const [rows] = await connection.query(`SELECT * FROM options WHERE question_id = ?`, [question_id]);
       return rows;
     } catch (err) {
-      console.error(`Error getting ${table_name}options by question ID:`, err);
-      throw new Error(`Error getting ${table_name}options by question ID`);
+      console.error(`Error getting options by question ID:`, err);
+      throw new Error(`Error getting options by question ID`);
     }
   }
 
-  static async getCorrectOptionsByTestId(table_name, test_id) {
+  static async getCorrectOptionsByTestId(test_id) {
     try {
-      const [rows] = await connection.query(`SELECT * FROM ${table_name}options WHERE test_id = ? AND is_correct = 1`, [test_id]);
+      const [rows] = await connection.query(`SELECT * FROM options WHERE test_id = ? AND is_correct = 1`, [test_id]);
       return rows;
     } catch (err) {
-      console.error(`Error getting correct ${table_name}options by test ID:`, err);
-      throw new Error(`Error getting correct ${table_name}options by test ID`);
+      console.error(`Error getting correct options by test ID:`, err);
+      throw new Error(`Error getting correct options by test ID`);
     }
   }
 
-  static async updateOption(table_name, option_id, updatedFields) {
+  static async updateOption(option_id, updatedFields) {
     const setClause = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
     try {
-      await connection.query(`UPDATE ${table_name}options SET ${setClause} WHERE option_id = ?`, [...Object.values(updatedFields), option_id]);
+      await connection.query(`UPDATE options SET ${setClause} WHERE option_id = ?`, [...Object.values(updatedFields), option_id]);
       return { option_id, ...updatedFields };
     } catch (err) {
       console.error(`Error updating option:`, err);
@@ -56,9 +56,9 @@ class OptionModel {
     }
   }
 
-  static async deleteOption(table_name, option_id) {
+  static async deleteOption(option_id) {
     try {
-      await connection.query(`DELETE FROM ${table_name}options WHERE option_id = ?`, [option_id]);
+      await connection.query(`DELETE FROM options WHERE option_id = ?`, [option_id]);
       return { success: true };
     } catch (err) {
       console.error(`Error deleting option:`, err);

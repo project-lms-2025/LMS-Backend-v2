@@ -2,15 +2,15 @@
 
 const markingSchemes = {
     GATE: {
-        MCQ: ({option_id, correct_option_id, positive_marks, negative_marks}) => {
-            if (option_id === correct_option_id) {
+        MCQ: ({selected_option_ids, correct_option_id, positive_marks, negative_marks}) => {
+            if (selected_option_ids === correct_option_id) {
                 return positive_marks;
             } else {
                 return -negative_marks;
             }
         },
-        MSQ: ({option_id, correct_option_id, positive_marks, negative_marks}) => {
-            if (option_id === correct_option_id) {
+        MSQ: ({selected_option_ids, correct_option_id, positive_marks, negative_marks}) => {
+            if (selected_option_ids === correct_option_id) {
                 return positive_marks;
             } else {
                 return -negative_marks;
@@ -25,8 +25,8 @@ const markingSchemes = {
         }
     },
     JEE: {
-        MCQ: ({option_id, correct_option_id, positive_marks, negative_marks}) => {
-            if (option_id === correct_option_id) {
+        MCQ: ({selected_option_ids, correct_option_id, positive_marks, negative_marks}) => {
+            if (selected_option_ids === correct_option_id) {
                 return positive_marks;
             } else {
                 return -negative_marks;

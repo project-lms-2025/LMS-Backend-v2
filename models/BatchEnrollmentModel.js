@@ -4,21 +4,23 @@ import { generateUniqueId } from "../utils/idGenerator.js";
 class BatchEnrollmentModel {
   static async enrollUser({ user_id, batch_id, enrollment_type }) {
     const enrollment_id = generateUniqueId(); // Assuming you have a function for generating unique IDs
+    const status="ACTIVE";
     const query = `
-      INSERT INTO batch_enrollments (enrollment_id, user_id, batch_id, enrollment_type) 
-      VALUES (?, ?, ?, ?)
+      INSERT INTO enrollments (enrollment_id, user_id, entity_id, entity_type, status) 
+      VALUES (?, ?, ?, ?, ?)
     `;
     try {
-      await connection.query(query, [enrollment_id, user_id, batch_id, enrollment_type]);
+      await connection.query(query, [enrollment_id, user_id, batch_id, enrollment_type, status]);
       return { success: true, message: 'User enrolled successfully' };
     } catch (err) {
+      console.error('Error enrolling user:', err);
       return { success: false, message: err.message || 'Error enrolling user' };
     }
   }
 
   static async enrollBatchUsers(items) {
     const query = `
-      INSERT INTO batch_enrollments (enrollment_id, user_id, batch_id, enrollment_date) 
+      INSERT INTO enrollments (enrollment_id, user_id, batch_id, enrollment_date) 
       VALUES ?
     `;
     const values = items.map(item => [generateUniqueId(), item.user_id, item.batch_id, new Date()]);
@@ -35,8 +37,8 @@ class BatchEnrollmentModel {
       const result = await connection.query(
         `
         SELECT b.*
-        FROM batch_enrollments be
-        JOIN batches b ON be.batch_id = b.batch_id
+        FROM enrollments be
+        JOIN batches b ON be.entity_id = b.batch_id
         WHERE be.user_id = ?
         `,
         [user_id]
@@ -50,7 +52,7 @@ class BatchEnrollmentModel {
   }
 
   static async getEnrollmentByBatchId(batch_id) {
-    const query = `SELECT * FROM batch_enrollments WHERE batch_id = ?`;
+    const query = `SELECT * FROM enrollments WHERE batch_id = ?`;
     try {
       const [results] = await connection.query(query, [batch_id]);
       return results.length ? { success: true, data: results } : { success: false, message: 'No enrollments found for this batch' };
@@ -60,7 +62,7 @@ class BatchEnrollmentModel {
   }
 
   static async getEnrollmentByEnrollmentId(enrollment_id) {
-    const query = `SELECT * FROM batch_enrollments WHERE enrollment_id = ?`;
+    const query = `SELECT * FROM enrollments WHERE enrollment_id = ?`;
     try {
       const [results] = await connection.query(query, [enrollment_id]);
       return results.length ? { success: true, data: results[0] } : { success: false, message: 'Enrollment not found' };

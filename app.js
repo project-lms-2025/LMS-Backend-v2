@@ -9,12 +9,12 @@ import errorHandler from './middleware/ErrorMiddleware.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import AuthMiddleware from './middleware/AuthMiddleware.js';
-import batchRoutes from "./routes/BatchRoutes.js"
-import courseRoutes from "./routes/CourseRoutes.js"
+import batchRoutes from "./main/routes/BatchRoutes.js"
+import courseRoutes from "./main/routes/CourseRoutes.js"
 import classRoutes from "./routes/ClassRoutes.js"
 import testRoutes from "./test/testRouter.js"
-import mainRoutes from './main/mainRoutes.js'
-import testSeriesRoutes from './test/routes/testSeriesRoutes.js'
+// import mainRoutes from './main/mainRoutes.js'
+import testSeriesRoutes from './main/routes/testSeriesRoutes.js'
 import setTable from './middleware/setTableMIddleware.js';
 import enrollmentroutes from './routes/EnrollmentRoutes.js';
 import swaggerSpec from './config/swagger.js';
@@ -47,7 +47,7 @@ app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
 app.use('/api/enrollment', AuthMiddleware.auth, enrollmentroutes)
 app.use('/api/payment/', AuthMiddleware.auth, paymentRoutes)
-app.use('/api/', mainRoutes)
+// app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{
   return res.json({message: "this is the home of teachertech test api"})
 })

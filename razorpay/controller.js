@@ -1,9 +1,11 @@
 import express from 'express';
 import razorpayInstance from '../config/razorpay.js';
+import crypto from 'crypto';
 
 const router = express.Router();
 
-class RazorPayController{
+class RazorPayController {
+    // Create order as previously defined
     static async createOrder(req, res) {
         const { amount, currency } = req.body;
 
@@ -19,6 +21,49 @@ class RazorPayController{
             console.error(error);
             res.status(500).send('Error creating RazorPay order');
         }
+    }
+
+    static async handleWebhook(req, res) {
+        const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
+        const signature = req.headers['x-razorpay-signature'];
+        const payload = JSON.stringify(req.body);
+
+        const verifySignature = (payload, signature) => {
+            const generatedSignature = crypto
+                .createHmac('sha256', razorpaySecret)
+                .update(payload)
+                .digest('hex');
+            return generatedSignature === signature;
+        };
+
+        if (!verifySignature(payload, signature)) {
+            return res.status(400).json({ message: 'Invalid signature' });
+        }
+
+        const { event, payload: { payment } } = req.body;
+
+        if (event === 'payment.captured') {
+            const batchId = payment.notes.batch_id;
+            const userId = payment.notes.user_id;
+
+            console.log('Payment captured!');
+            console.log('Batch ID:', batchId);
+            console.log('User ID:', userId);
+
+            try {
+                // Implement your business logic here, e.g., update DB with payment status
+                // Example: await updateOrderStatus(batchId, userId, payment.status);
+
+                // Respond with success
+                return res.status(200).json({ message: 'Webhook received successfully' });
+            } catch (err) {
+                console.error('Error processing payment:', err);
+                return res.status(500).json({ message: 'Internal Server Error' });
+            }
+        }
+
+        // If not a captured payment event, just return success (you can handle other events here)
+        return res.status(200).json({ message: 'Event received' });
     }
 }
 
