@@ -108,24 +108,30 @@ class TestModel {
     }
   }
 
-  static async getAllTests() {
-    const queryStr = `
+  static async getAllTests(test_type) {
+    let queryStr = `
       SELECT t.*, 
              c.course_name, 
              s.title AS series_title
       FROM tests t
       LEFT JOIN courses c ON t.course_id = c.course_id
-      LEFT JOIN test_series s ON t.series_id = s.series_id;
+      LEFT JOIN test_series s ON t.series_id = s.series_id
     `;
-
+  
+    // Add filter condition for test_type if provided
+    if (test_type) {
+      queryStr += ` WHERE t.test_type = ?`;
+    }
+  
     try {
-      const [rows] = await connection.query(queryStr);
+      const [rows] = await connection.query(queryStr, [test_type]);
       return rows;
     } catch (err) {
       console.error(err);
       throw new Error("Error fetching all tests");
     }
   }
+  
 
   static async updateTest(test_id, updatedFields) {
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(", ");

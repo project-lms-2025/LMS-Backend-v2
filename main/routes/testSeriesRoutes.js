@@ -6,7 +6,7 @@ import RoleMiddleware from '../../middleware/RoleMiddleware.js';
 const router = express.Router();
 
 router.post( '/', AuthMiddleware.auth, await RoleMiddleware.checkRole(["admin", "teacher"]), TestSeriesController.createTestSeries);
-router.get( '/', AuthMiddleware.auth, await RoleMiddleware.checkRole(["admin", "teacher"]), TestSeriesController.getAllTestSeries);
+router.get( '/', TestSeriesController.getAllTestSeries);
 router.get('/:series_id', TestSeriesController.getTestSeriesById);
 router.get('/my-series', AuthMiddleware.auth, TestSeriesController.getEnrolledTestSeries);
 router.put( '/:series_id', AuthMiddleware.auth, await RoleMiddleware.checkRole(["admin", "teacher"]), TestSeriesController.updateTestSeries);

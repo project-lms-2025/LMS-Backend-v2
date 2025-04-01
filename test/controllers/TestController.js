@@ -5,8 +5,10 @@ import StudentResponseModel from '../models/StudentResponseModel.js';
 
 class TestController {
   static async getAllTests(req, res) {
+    const test_type = req.query.test_type;
+    console.log("this is req query",req.query);
     try {
-      const tests = await TestModel.getAllTests();
+      const tests = await TestModel.getAllTests(test_type);
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);

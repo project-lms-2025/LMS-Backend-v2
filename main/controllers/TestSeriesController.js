@@ -29,7 +29,8 @@ class TestSeriesController {
   static async getAllTestSeries(req, res) {
     try {
       const series = await TestSeriesModel.getAllTestSeries();
-      res.status(200).json(series);
+      console.log(series);
+      res.status(200).json({message: "Test series fetched successfully", data: series}); 
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch test series' });

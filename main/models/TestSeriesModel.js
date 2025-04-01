@@ -32,7 +32,7 @@ class TestSeriesModel {
   // Get all test series
   static async getAllTestSeries() {
     const queryStr = `
-      SELECT * FROM test_series
+      SELECT * FROM test_series;
     `;
     try {
       const [rows] = await connection.query(queryStr);
