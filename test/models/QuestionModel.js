@@ -1,59 +1,63 @@
-import connection from "../../config/database.js"; 
+import databasePool from "../../config/databasePool.js";
 
 class QuestionModel {
-  static async createQuestion({question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks, section, correct_option_id }) {
+  // Helper function to handle database queries
+  static async queryDatabase(queryStr, params = [], transaction = false) {
+    const connection = await databasePool.getConnection();
+    try {
+      if (transaction) {
+        await connection.beginTransaction();
+      }
+
+      const [rows] = await connection.query(queryStr, params);
+
+      if (transaction) {
+        await connection.commit();
+      }
+
+      return rows;
+    } catch (err) {
+      if (transaction) {
+        await connection.rollback();
+      }
+      console.error(`Error executing query:`, err);
+      throw new Error(`Error executing query`);
+    } finally {
+      connection.release();
+    }
+  }
+
+  static async createQuestion({ question_id, test_id, question_type, question_text, image_url = null, positive_marks, negative_marks, section, correct_option_id }) {
     const queryStr = `
       INSERT INTO questions (question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    try {
-      await connection.query(queryStr, [question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id]);
-      return { question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id };
-    } catch (err) {
-      console.error(`error creating question`, err);
-      throw new Error(`Error creating question`);
-    }
+    await QuestionModel.queryDatabase(queryStr, [question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id], true);
+    return { question_id, test_id, question_type, question_text, image_url, positive_marks, negative_marks, section, correct_option_id };
   }
 
   static async getQuestionById(question_id) {
     const queryStr = `SELECT * FROM questions WHERE question_id = ?`;
-    try {
-      const [rows] = await connection.query(queryStr, [question_id]);
-      return rows.length ? rows[0] : null;
-    } catch (err) {
-      throw new Error(`Error getting question by ID`);
-    }
+    const rows = await QuestionModel.queryDatabase(queryStr, [question_id]);
+    return rows.length ? rows[0] : null;
   }
 
   static async getQuestionsByTestId(test_id) {
     const queryStr = `SELECT * FROM questions WHERE test_id = ?`;
-    try {
-      const [rows] = await connection.query(queryStr, [test_id]);
-      return rows;
-    } catch (err) {
-      throw new Error(`Error getting questions by test ID`);
-    }
+    return await QuestionModel.queryDatabase(queryStr, [test_id]);
   }
 
   static async updateQuestion(question_id, updatedFields) {
-    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`);
-    const queryStr = `UPDATE questions SET ${updates.join(', ')} WHERE question_id = ?`;
-    try {
-      await connection.query(queryStr, [...Object.values(updatedFields), question_id]);
-      return { question_id, ...updatedFields };
-    } catch (err) {
-      throw new Error(`Error updating question`);
-    }
+    const setClause = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
+    const queryStr = `UPDATE questions SET ${setClause} WHERE question_id = ?`;
+    await QuestionModel.queryDatabase(queryStr, [...Object.values(updatedFields), question_id], true);
+    return { question_id, ...updatedFields };
   }
 
   static async deleteQuestion(question_id) {
     const queryStr = `DELETE FROM questions WHERE question_id = ?`;
-    try {
-      await connection.query(queryStr, [question_id]);
-      return { success: true };
-    } catch (err) {
-      throw new Error(`Error deleting question`);
-    }
+    await QuestionModel.queryDatabase(queryStr, [question_id], true);
+    return { success: true };
   }
 }
 

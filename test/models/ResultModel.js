@@ -1,6 +1,32 @@
-import connection from "../../config/database.js";
+import databasePool from "../../config/databasePool.js";
 
 class ResultModel {
+  // Helper function to handle database queries
+  static async queryDatabase(queryStr, params = [], transaction = false) {
+    const connection = await databasePool.getConnection();
+    try {
+      if (transaction) {
+        await connection.beginTransaction();
+      }
+
+      const [rows] = await connection.query(queryStr, params);
+
+      if (transaction) {
+        await connection.commit();
+      }
+
+      return rows;
+    } catch (err) {
+      if (transaction) {
+        await connection.rollback();
+      }
+      console.error(`Error executing query:`, err);
+      throw new Error(`Error executing query`);
+    } finally {
+      connection.release();
+    }
+  }
+
   // Method to fetch detailed result for a specific student and test
   static async getDetailedResult(test_id, student_id) {
     const queryStr = `
@@ -27,15 +53,16 @@ class ResultModel {
     `;
 
     try {
-      const [rows] = await connection.query(queryStr, [test_id, student_id]);
+      const rows = await ResultModel.queryDatabase(queryStr, [test_id, student_id]);
+
       const testData = {
         test_id: rows[0]?.test_id,
         teacher_id: rows[0]?.teacher_id,
         course_id: rows[0]?.course_id,
         title: rows[0]?.title,
         description: rows[0]?.description,
-        schedule_start: rows[0]?.schedule_start,  // Renamed field for the new schema
-        schedule_end: rows[0]?.schedule_end,      // Renamed field for the new schema
+        schedule_start: rows[0]?.schedule_start,
+        schedule_end: rows[0]?.schedule_end,
         duration: rows[0]?.duration,
         total_marks: rows[0]?.total_marks,
         created_at: rows[0]?.created_at,
@@ -93,7 +120,7 @@ class ResultModel {
       return testData.questions.length > 0 ? testData : null;
     } catch (err) {
       console.error("Error fetching detailed result:", err);
-      throw new Error("Error getting test by ID");
+      throw new Error("Error getting detailed result");
     }
   }
 
@@ -104,18 +131,18 @@ class ResultModel {
         ss.score_id AS score_id, 
         ss.test_id AS test_id, 
         ss.student_id AS student_id, 
-        ss.raw_score AS final_score,  -- Updated to raw_score
+        ss.raw_score AS final_score,  
         u.name AS student_name
       FROM student_scores ss
       JOIN users u ON ss.student_id = u.user_id
       WHERE ss.test_id = ?
-      ORDER BY ss.raw_score DESC;  -- Updated to raw_score
+      ORDER BY ss.raw_score DESC;  
     `;
     
     try {
-      const [rows] = await connection.query(queryStr, [test_id]);
-      return rows;
+      return await ResultModel.queryDatabase(queryStr, [test_id]);
     } catch (err) {
+      console.error("Error fetching scores:", err);
       throw new Error("Error fetching scores: " + err.message);
     }
   }

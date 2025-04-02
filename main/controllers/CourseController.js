@@ -37,8 +37,9 @@ class CourseController {
     }
 
     static async getAllCourses(req, res) {
+        console.log(req.role, req.user_id);
         try {
-            const courses = await CourseModel.getAllCourses();
+            const courses = await CourseModel.getAllCourses({role: req.role, user_id: req.user_id});
             res.json(courses);
         } catch (error) {
             console.error(error);

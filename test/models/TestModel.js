@@ -1,4 +1,4 @@
-import connection from "../../config/database.js";
+import pool from "../../config/databasePool.js";
 
 class TestModel {
   static async createTest({ test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type }) {
@@ -7,14 +7,23 @@ class TestModel {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
+
       await connection.query(queryStr, [
         test_id, teacher_id, course_id || null, series_id || null, title, description, schedule_start, schedule_end, duration, total_marks, test_type
       ]);
+
+      await connection.commit();
       return { test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type };
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error creating test");
+    } finally {
+      connection.release();
     }
   }
 
@@ -32,8 +41,12 @@ class TestModel {
       WHERE t.test_id = ?;
     `;
     
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, [test_id]);
+
       if (rows.length === 0) return null;
 
       const testData = {
@@ -78,10 +91,14 @@ class TestModel {
         }
       });
 
+      await connection.commit();
       return testData;
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error fetching test by ID");
+    } finally {
+      connection.release();
     }
   }
 
@@ -99,12 +116,20 @@ class TestModel {
       WHERE sr.student_id = ?;
     `;
 
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, [studentId]);
+
+      await connection.commit();
       return rows;
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error fetching attempted tests");
+    } finally {
+      connection.release();
     }
   }
 
@@ -134,13 +159,21 @@ class TestModel {
     if (conditions.length > 0) {
       queryStr += ' WHERE ' + conditions.join(' AND ');
     }
-  
+
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, values);
+
+      await connection.commit();
       return rows;
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error fetching all tests");
+    } finally {
+      connection.release();
     }
   }
   
@@ -173,13 +206,21 @@ class TestModel {
     if (conditions.length > 0) {
       queryStr += ' WHERE ' + conditions.join(' AND ');
     }
-  
+
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, values);
+
+      await connection.commit();
       return rows;
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error fetching tests.");
+    } finally {
+      connection.release();
     }
   }
 
@@ -187,24 +228,40 @@ class TestModel {
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(", ");
     const queryStr = `UPDATE tests SET ${updates} WHERE test_id = ?`;
 
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       await connection.query(queryStr, [...Object.values(updatedFields), test_id]);
+
+      await connection.commit();
       return { test_id, ...updatedFields };
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error updating test");
+    } finally {
+      connection.release();
     }
   }
 
   static async deleteTest(test_id) {
     const queryStr = `DELETE FROM tests WHERE test_id = ?`;
 
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       await connection.query(queryStr, [test_id]);
+
+      await connection.commit();
       return { success: true };
     } catch (err) {
+      await connection.rollback();
       console.error(err);
       throw new Error("Error deleting test");
+    } finally {
+      connection.release();
     }
   }
 
@@ -222,12 +279,20 @@ class TestModel {
       ) OR s.series_id IS NOT NULL);
     `;
 
+    const connection = await pool.getConnection();
+
     try {
+      await connection.beginTransaction();
       const [result] = await connection.query(query, [user_id]);
+
+      await connection.commit();
       return result;
     } catch (error) {
+      await connection.rollback();
       console.error("Error fetching enrolled tests:", error);
       throw new Error("Error fetching enrolled tests");
+    } finally {
+      connection.release();
     }
   }
 }

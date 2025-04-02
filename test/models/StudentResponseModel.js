@@ -1,4 +1,4 @@
-import connection from "../../config/databasePool.js"; 
+import pool from "../../config/databasePool.js"; 
 import { generateUniqueId } from "../../utils/idGenerator.js";
 import markingSchemes from "../../utils/markingSchemes.js";
 
@@ -6,7 +6,7 @@ class StudentResponseModel {
   static async submitResponse({ test_id, student_id, responses }) {
     let totalScore = 0;
 
-    const conn = await connection.getConnection();  // Get connection from the pool
+    const conn = await pool.getConnection();  // Get pool from the pool
     await conn.beginTransaction();  // Start transaction
 
     try {
@@ -63,12 +63,12 @@ class StudentResponseModel {
       await conn.rollback();  // Rollback transaction in case of error
       throw new Error('Error during transaction. Changes have been rolled back');
     } finally {
-      conn.release();  // Release the connection back to the pool
+      conn.release();  // Release the pool back to the pool
     }
   }
 
   static async getResponsesByTestId(test_id) {
-    const conn = await connection.getConnection();
+    const conn = await pool.getConnection();
     try {
       const queryStr = `SELECT * FROM student_responses WHERE test_id = ?`;
       const [rows] = await conn.query(queryStr, [test_id]);
@@ -81,7 +81,7 @@ class StudentResponseModel {
   }
 
   static async updateResponse(response_id, updatedFields) {
-    const conn = await connection.getConnection();
+    const conn = await pool.getConnection();
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(', ');
     const queryStr = `UPDATE student_responses SET ${updates} WHERE response_id = ?`;
 
@@ -96,7 +96,7 @@ class StudentResponseModel {
   }
 
   static async deleteResponse(response_id) {
-    const conn = await connection.getConnection();
+    const conn = await pool.getConnection();
     const queryStr = `DELETE FROM student_responses WHERE response_id = ?`;
 
     try {

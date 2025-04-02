@@ -36,15 +36,32 @@ class CourseModel {
     }
   }
 
-  static async getAllCourses() {
-    const query = 'SELECT * FROM courses';
+  static async getAllCourses(user_data) {
+    let queryStr = `
+      SELECT * 
+      FROM courses
+    `;
+    
+    let conditions = [];
+    let values = [];
+  
+    if (user_data.role === 'teacher') {
+      conditions.push('teacher_id = ?');
+      values.push(user_data.user_id);
+    }
+  
+    if (conditions.length > 0) {
+      queryStr += ' WHERE ' + conditions.join(' AND ');
+    }
+  
     try {
-      const results = await this.queryDatabase(query);
+      const results = await this.queryDatabase(queryStr, values);
       return { success: true, data: results };
     } catch (err) {
       return { success: false, message: err.message || 'Error fetching courses' };
     }
   }
+  
 
   static async getCoursesByBatchId(batch_id) {
     const query = 'SELECT * FROM courses WHERE batch_id = ?';
