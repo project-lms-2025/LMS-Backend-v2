@@ -7,7 +7,6 @@ class AuthMiddleware {
       var token = req.header("Authorization")?.replace("Bearer ", "");
       if (!token)token = req.cookie?.token;
       // console.log("token", token)
-      if(!token)console.log(req.header("Authorization"))
       if(!token)return res.status(401).json({success: false, message:"Unauthorised here"})
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const session = await UserSession.getSessionByUserAndDevice(

@@ -46,7 +46,7 @@ app.use('/api/class/', classRoutes)
 app.use('/api/test/', setTable, testRoutes)
 app.use('/api/test-series', AuthMiddleware.auth, testSeriesRoutes)
 app.use('/api/enrollment', AuthMiddleware.auth, enrollmentroutes)
-app.use('/api/payment/', AuthMiddleware.auth, paymentRoutes)
+app.use('/api/payment/', paymentRoutes)
 // app.use('/api/', mainRoutes)
 app.use('/', (req, res) =>{
   return res.json({message: "this is the home of teachertech test api"})

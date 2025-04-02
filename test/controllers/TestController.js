@@ -18,12 +18,10 @@ class TestController {
 
   static async getTestsInEntity(req, res) {
     const test_type = req.query.test_type;
-    console.log(req.params)
     const { series_id, course_id } = test_type == "SERIES_TEST"
     ? {series_id: req.params.entity_id, course_id: null}
     : {series_id: null, course_id: req.params.entity_id};
     try {
-      console.log("this is",series_id, course_id);
       const tests = await TestModel.getTestsInEntity({series_id, course_id});
       res.status(200).json(tests);
     } catch (error) {

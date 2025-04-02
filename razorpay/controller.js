@@ -1,6 +1,8 @@
 import express from 'express';
 import razorpayInstance from '../config/razorpay.js';
 import crypto from 'crypto';
+import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
+import EmailService from '../services/EmailService.js';
 
 const router = express.Router();
 
@@ -18,6 +20,7 @@ class RazorPayController {
                     batch_id,
                     series_id,
                     user_id,
+                    email: req.email
                 }
             };
 
@@ -30,10 +33,9 @@ class RazorPayController {
     }
 
     static async handleWebhook(req, res) {
-        const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
+        const razorpaySecret = process.env.RAZORPAY_SECRET_KEY;
         const signature = req.headers['x-razorpay-signature'];
         const payload = JSON.stringify(req.body);
-        console.log('Payload:', payload);
 
         const verifySignature = (payload, signature) => {
             const generatedSignature = crypto
@@ -48,11 +50,11 @@ class RazorPayController {
         }
 
         const { event, payload: { payment } } = req.body;
-
         if (event === 'payment.captured') {
-            const batchId = payment.notes.batch_id;
-            const seriesId = payment.notes.series_id;
-            const userId = payment.notes.user_id;
+            const batchId = payment.entity.notes.batch_id;
+            const seriesId = payment.entity.notes.series_id;
+            const userId = payment.entity.notes.user_id;
+            const email = payment.entity.notes.email;
 
             console.log('Payment captured!');
             console.log('Batch ID:', batchId);
@@ -60,6 +62,13 @@ class RazorPayController {
             console.log('series ID:', seriesId);
 
             try {
+                await BatchEnrollmentModel.enrollUser({
+                    user_id: userId,
+                    entity_id: batchId || seriesId,
+                    enrollment_type: batchId ? 'BATCH' : 'TEST_SERIES'
+                });
+
+                await EmailService.sendEmailService(email, "enrollmentSuccess", process.env.FRONTEND_URL)
                 // Implement your business logic here, e.g., update DB with payment status
                 // Example: await updateOrderStatus(batchId, userId, payment.status);
 

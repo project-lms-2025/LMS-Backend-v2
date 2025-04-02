@@ -33,8 +33,28 @@ class EmailService {
         <h3>Email Login</h3>
         <p>Your OTP Login to ${process.env.APP_NAME}: <strong>${linkOrOtp}</strong></p>
         <p>If you did not request this, please ignore this email.</p>
+
+        <p>If you need any assistance, feel free to reach out to our support team.</p>
+
+        <p>Best regards,<br />The ${process.env.APP_NAME} Team</p>
       `;
-    } else {
+    } else if (type === "enrollmentSuccess") {
+      subject = "Enrollment Successfull";
+      htmlContent = `
+        <h3>Welcome to ${process.env.APP_NAME}!</h3>
+        <p>Dear user,</p>
+        <p>We're excited to have you on board! You've successfully enrolled.</p>
+        
+        <p>You can access your resources using the ${linkOrOtp}. log in and start your learning journey.</p>
+        
+        <p>If you did not request this enrollment, please ignore this email.</p>
+        
+        <p>If you need any assistance, feel free to reach out to our support team.</p>
+        
+        <p>Best regards,<br />The ${process.env.APP_NAME} Team</p>
+      `;
+    }
+     else {
       throw new Error("Invalid email type");
     }
   

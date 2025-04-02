@@ -2,7 +2,7 @@ import connection from "../config/database.js";
 import { generateUniqueId } from "../utils/idGenerator.js";
 
 class BatchEnrollmentModel {
-  static async enrollUser({ user_id, batch_id, enrollment_type }) {
+  static async enrollUser({ user_id, entity_id, enrollment_type }) {
     const enrollment_id = generateUniqueId(); // Assuming you have a function for generating unique IDs
     const status="ACTIVE";
     const query = `
@@ -10,7 +10,7 @@ class BatchEnrollmentModel {
       VALUES (?, ?, ?, ?, ?)
     `;
     try {
-      await connection.query(query, [enrollment_id, user_id, batch_id, enrollment_type, status]);
+      await connection.query(query, [enrollment_id, user_id, entity_id, enrollment_type, status]);
       return { success: true, message: 'User enrolled successfully' };
     } catch (err) {
       console.error('Error enrolling user:', err);

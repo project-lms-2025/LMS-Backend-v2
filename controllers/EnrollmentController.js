@@ -1,10 +1,11 @@
 import UserModel from '../models/UserModel.js';
 import BatchModel from '../main/models/BatchModel.js';
 import BatchEnrollmentModel from '../models/BatchEnrollmentModel.js';
+import TestSeriesModel from '../main/models/TestSeriesModel.js';
 
 class EnrollmentController {
   static async enrollUser(req, res) {
-    const { batch_id, payment_id, enrollment_type } = req.body;
+    const { entity_id, payment_id, enrollment_type } = req.body;
 
     try {
       const user_id = req.user_id;
@@ -13,21 +14,21 @@ class EnrollmentController {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      const batchResponse = await BatchModel.getBatchById(batch_id);
-      if (!batchResponse.success) {
+      const response = enrollment_type=="TEST_SERIES" ? await TestSeriesModel.getTestSeriesById(entity_id): await BatchModel.getBatchById(entity_id);
+      if (!response.success) {
         return res.status(404).json({ success: false, message: 'Batch not found' });
       }
 
       if(!payment_id) {
         return res.status(400).json({ success: false, message: 'Payment ID is required' });
       }
-      // if(payment_amount !== batchResponse.data.batch_price) {
+      // if(payment_amount !== response.data.batch_price) {
       //   return res.status(400).json({ success: false, message: 'Payment amount does not match batch price' });
       // }
 
       const enrollmentResponse = await BatchEnrollmentModel.enrollUser({ 
         user_id, 
-        batch_id,
+        entity_id,
         enrollment_type
       });
 

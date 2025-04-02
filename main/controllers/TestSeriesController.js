@@ -28,7 +28,6 @@ class TestSeriesController {
   static async getAllTestSeries(req, res) {
     try {
       const series = await TestSeriesModel.getAllTestSeries();
-      console.log(series);
       res.status(200).json({success: true, message: "Test series fetched successfully", data: series}); 
     } catch (error) {
       console.error(error);
@@ -43,7 +42,8 @@ class TestSeriesController {
       if (!series) {
         return res.status(404).json({ error: 'Test series not found' });
       }
-      res.status(200).json(series);
+      console.log(series);
+      res.status(200).json({success: true, message: "test series fetched successfully", data: series});
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch the test series' });
@@ -57,7 +57,7 @@ class TestSeriesController {
       if (!enrolledSeries.length) {
         return res.status(404).json({ error: 'No enrolled test series found' });
       }
-      res.status(200).json(enrolledSeries);
+      res.status(200).json({success: true, data: enrolledSeries, message: "Enrolled test series fetched successfully"});
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch enrolled test series' });
