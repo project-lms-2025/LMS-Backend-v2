@@ -1,18 +1,18 @@
 import pool from "../../config/databasePool.js";
 
 class TestSeriesModel {
-  static async createTestSeries({ series_id, teacher_id, title, description }) {
+  static async createTestSeries({ series_id, teacher_id, title, description, cost }) {
     const queryStr = `
-      INSERT INTO test_series (series_id, teacher_id, title, description, total_tests)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO test_series (series_id, teacher_id, title, description, total_tests, cost)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
     
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      await connection.query(queryStr, [series_id, teacher_id, title, description, 0]);
+      await connection.query(queryStr, [series_id, teacher_id, title, description, 0, cost]);
       await connection.commit();
-      return { series_id, teacher_id, title, description, total_tests: 0 };
+      return { series_id, teacher_id, title, description, total_tests: 0 , cost};
     } catch (err) {
       await connection.rollback();
       console.error(err);

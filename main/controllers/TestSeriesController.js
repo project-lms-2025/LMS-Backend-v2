@@ -4,13 +4,14 @@ class TestSeriesController {
   static async createTestSeries(req, res) {
     const seriesData = req.body;
     try {
-      const { series_id, title, description } = seriesData;
-      
+      const { series_id, title, description, cost } = seriesData;
+
       const series = await TestSeriesModel.createTestSeries({
         series_id,
         teacher_id: req.user_id,
         title,
-        description
+        description,
+        cost
       });
 
       return res.status(201).json({

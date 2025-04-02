@@ -37,10 +37,10 @@ class CourseModel {
   }
 
   static async getAllCourses(user_data) {
-    let queryStr = `
+    let queryStr = ` 
       SELECT * 
-      FROM courses
-    `;
+      FROM courses 
+    `; 
     
     let conditions = [];
     let values = [];
@@ -61,7 +61,6 @@ class CourseModel {
       return { success: false, message: err.message || 'Error fetching courses' };
     }
   }
-  
 
   static async getCoursesByBatchId(batch_id) {
     const query = 'SELECT * FROM courses WHERE batch_id = ?';
