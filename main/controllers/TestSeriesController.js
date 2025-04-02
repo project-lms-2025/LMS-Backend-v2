@@ -43,7 +43,6 @@ class TestSeriesController {
       if (!series) {
         return res.status(404).json({ error: 'Test series not found' });
       }
-      console.log(series);
       res.status(200).json({success: true, message: "test series fetched successfully", data: series});
     } catch (error) {
       console.error(error);

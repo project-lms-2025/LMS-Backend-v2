@@ -56,10 +56,6 @@ class RazorPayController {
             const userId = payment.entity.notes.user_id;
             const email = payment.entity.notes.email;
 
-            console.log('Payment captured!');
-            console.log('Batch ID:', batchId);
-            console.log('User ID:', userId);
-            console.log('series ID:', seriesId);
 
             try {
                 await BatchEnrollmentModel.enrollUser({

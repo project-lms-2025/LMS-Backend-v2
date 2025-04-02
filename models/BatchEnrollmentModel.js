@@ -61,7 +61,6 @@ class BatchEnrollmentModel {
     const connection = await pool.getConnection();  // Get a connection from the pool
     try {
       const [result] = await connection.query(query, [user_id]);
-      console.log('Enrolled batches:', result);
       return { success: true, data: result };  // Returning the result as an array of batches
     } catch (error) {
       console.error('Error fetching enrolled batches:', error);

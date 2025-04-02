@@ -13,12 +13,4 @@ const pool = mysql.createPool({
   queueLimit: 0, // No limit on queued requests
 });
 
-pool.on('connection', () => {
-  console.log('New connection established in the pool');
-});
-
-pool.on('release', () => {
-  console.log('Connection released back to the pool');
-});
-
 export default pool;
