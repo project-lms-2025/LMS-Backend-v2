@@ -4,14 +4,13 @@ class TestSeriesController {
   static async createTestSeries(req, res) {
     const seriesData = req.body;
     try {
-      const { series_id, title, description, total_tests } = seriesData;
+      const { series_id, title, description } = seriesData;
       
       const series = await TestSeriesModel.createTestSeries({
         series_id,
         teacher_id: req.user_id,
         title,
-        description,
-        total_tests
+        description
       });
 
       return res.status(201).json({
@@ -30,7 +29,7 @@ class TestSeriesController {
     try {
       const series = await TestSeriesModel.getAllTestSeries();
       console.log(series);
-      res.status(200).json({message: "Test series fetched successfully", data: series}); 
+      res.status(200).json({success: true, message: "Test series fetched successfully", data: series}); 
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to fetch test series' });

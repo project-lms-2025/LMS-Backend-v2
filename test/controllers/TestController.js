@@ -6,9 +6,25 @@ import StudentResponseModel from '../models/StudentResponseModel.js';
 class TestController {
   static async getAllTests(req, res) {
     const test_type = req.query.test_type;
-    console.log("this is req query",req.query);
+    const user_data = {user_id: req.user_id, role: req.role };
     try {
-      const tests = await TestModel.getAllTests(test_type);
+      const tests = await TestModel.getAllTests({test_type, user_data});
+      res.status(200).json(tests);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to fetch tests' });
+    }
+  }
+
+  static async getTestsInEntity(req, res) {
+    const test_type = req.query.test_type;
+    console.log(req.params)
+    const { series_id, course_id } = test_type == "SERIES_TEST"
+    ? {series_id: req.params.entity_id, course_id: null}
+    : {series_id: null, course_id: req.params.entity_id};
+    try {
+      console.log("this is",series_id, course_id);
+      const tests = await TestModel.getTestsInEntity({series_id, course_id});
       res.status(200).json(tests);
     } catch (error) {
       console.error(error);

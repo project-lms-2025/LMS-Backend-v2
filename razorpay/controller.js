@@ -7,12 +7,18 @@ const router = express.Router();
 class RazorPayController {
     // Create order as previously defined
     static async createOrder(req, res) {
-        const { amount, currency } = req.body;
+        const user_id = req.user_id;
+        const { amount, currency , batch_id, series_id} = req.body;
 
         try {
             const options = {
                 amount: amount * 100, // Convert amount to smallest currency unit
                 currency: currency || 'INR',
+                notes: {
+                    batch_id,
+                    series_id,
+                    user_id,
+                }
             };
 
             const order = await razorpayInstance.orders.create(options);
@@ -27,6 +33,7 @@ class RazorPayController {
         const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
         const signature = req.headers['x-razorpay-signature'];
         const payload = JSON.stringify(req.body);
+        console.log('Payload:', payload);
 
         const verifySignature = (payload, signature) => {
             const generatedSignature = crypto
@@ -44,11 +51,13 @@ class RazorPayController {
 
         if (event === 'payment.captured') {
             const batchId = payment.notes.batch_id;
+            const seriesId = payment.notes.series_id;
             const userId = payment.notes.user_id;
 
             console.log('Payment captured!');
             console.log('Batch ID:', batchId);
             console.log('User ID:', userId);
+            console.log('series ID:', seriesId);
 
             try {
                 // Implement your business logic here, e.g., update DB with payment status

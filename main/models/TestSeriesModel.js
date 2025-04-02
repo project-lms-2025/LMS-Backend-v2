@@ -2,14 +2,14 @@ import connection from "../../config/database.js";
 
 class TestSeriesModel {
   // Create a new test series
-  static async createTestSeries({ series_id, teacher_id, title, description, total_tests }) {
+  static async createTestSeries({ series_id, teacher_id, title, description }) {
     const queryStr = `
       INSERT INTO test_series (series_id, teacher_id, title, description, total_tests)
       VALUES (?, ?, ?, ?, ?)
     `;
     try {
-      await connection.query(queryStr, [series_id, teacher_id, title, description, total_tests]);
-      return { series_id, teacher_id, title, description, total_tests };
+      await connection.query(queryStr, [series_id, teacher_id, title, description, 0]);
+      return { series_id, teacher_id, title, description, total_tests: 0 };
     } catch (err) {
       console.error(err);
       throw new Error("Error creating test series");
@@ -19,7 +19,7 @@ class TestSeriesModel {
   // Get a test series by its ID
   static async getTestSeriesById(series_id) {
     const queryStr = `
-      SELECT * FROM test_series WHERE series_id = ?
+      SELECT * FROM test_series WHERE series_id = ?;
     `;
     try {
       const [rows] = await connection.query(queryStr, [series_id]);

@@ -108,7 +108,7 @@ class TestModel {
     }
   }
 
-  static async getAllTests(test_type) {
+  static async getAllTests({ test_type, user_data }) {
     let queryStr = `
       SELECT t.*, 
              c.course_name, 
@@ -118,13 +118,25 @@ class TestModel {
       LEFT JOIN test_series s ON t.series_id = s.series_id
     `;
   
-    // Add filter condition for test_type if provided
+    let conditions = [];
+    let values = [];
+  
     if (test_type) {
-      queryStr += ` WHERE t.test_type = ?`;
+      conditions.push('t.test_type = ?');
+      values.push(test_type);
+    }
+  
+    if (user_data.role === 'teacher') {
+      conditions.push('t.teacher_id = ?');
+      values.push(user_data.user_id);
+    }
+  
+    if (conditions.length > 0) {
+      queryStr += ' WHERE ' + conditions.join(' AND ');
     }
   
     try {
-      const [rows] = await connection.query(queryStr, [test_type]);
+      const [rows] = await connection.query(queryStr, values);
       return rows;
     } catch (err) {
       console.error(err);
@@ -132,6 +144,44 @@ class TestModel {
     }
   }
   
+  static async getTestsInEntity({ series_id, course_id }) {
+    let queryStr = `
+      SELECT t.*, 
+             c.course_name, 
+             s.title AS series_title
+      FROM tests t
+      LEFT JOIN courses c ON t.course_id = c.course_id
+      LEFT JOIN test_series s ON t.series_id = s.series_id
+    `;
+  
+    let conditions = [];
+    let values = [];
+  
+    if (series_id) {
+      conditions.push('t.series_id = ?');
+      values.push(series_id);
+    }
+    if (course_id) {
+      conditions.push('t.course_id = ?');
+      values.push(course_id);
+    }
+  
+    if (!series_id && !course_id) {
+      throw new Error("You must provide either series_id or course_id.");
+    }
+  
+    if (conditions.length > 0) {
+      queryStr += ' WHERE ' + conditions.join(' AND ');
+    }
+  
+    try {
+      const [rows] = await connection.query(queryStr, values);
+      return rows;
+    } catch (err) {
+      console.error(err);
+      throw new Error("Error fetching tests.");
+    }
+  }
 
   static async updateTest(test_id, updatedFields) {
     const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(", ");
