@@ -4,9 +4,9 @@ import { generateUniqueId } from "../../utils/idGenerator.js";
 class BatchController {
     static async createBatch(req, res) {
         try {
-            const { batch_name, description, start_date, end_date } = req.body;
+            const { batch_name, description, start_date, end_date, cost } = req.body;
             const batch_id = generateUniqueId(); // Generate unique batch ID
-            const newBatch = { batch_id, batch_name, description, start_date, end_date };
+            const newBatch = { batch_id, batch_name, description, start_date, end_date, cost };
             
             const result = await BatchModel.createBatch(newBatch);
             res.status(result.success ? 201 : 400).json(result);
