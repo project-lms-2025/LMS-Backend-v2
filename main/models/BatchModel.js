@@ -17,9 +17,9 @@ class BatchModel {
 
   // Create a new batch
   static async createBatch(batch) {
-    const query = 'INSERT INTO batches (batch_id, batch_name, description, start_date, end_date) VALUES (?, ?, ?, ?, ?)';
+    const query = 'INSERT INTO batches (batch_id, batch_name, description, start_date, end_date, cost) VALUES (?, ?, ?, ?, ?, ?)';
     try {
-      await this.queryDatabase(query, [batch.batch_id, batch.batch_name, batch.description, batch.start_date, batch.end_date]);
+      await this.queryDatabase(query, [batch.batch_id, batch.batch_name, batch.description, batch.start_date, batch.end_date, batch.cost]);
       return { success: true, message: 'Batch created successfully', data: batch };
     } catch (err) {
       return { success: false, message: err.message || 'Error creating batch' };
