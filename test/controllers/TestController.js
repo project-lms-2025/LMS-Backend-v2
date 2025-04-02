@@ -74,7 +74,6 @@ class TestController {
       const {
         title,
         test_id,
-        teacher_id: user_id,
         test_type,
         course_id,
         series_id,
@@ -91,6 +90,7 @@ class TestController {
         test_type,
         course_id,
         series_id,
+        teacher_id: user_id,
         title,
         description,
         schedule_start,
