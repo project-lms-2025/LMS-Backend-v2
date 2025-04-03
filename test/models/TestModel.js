@@ -46,6 +46,7 @@ class TestModel {
     try {
       await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, [test_id]);
+      console.log(rows); 
 
       if (rows.length === 0) return null;
 
