@@ -84,7 +84,6 @@ class TestController {
         totalMarks,
         questions,
       } = examData;
-
       const test = await TestModel.createTest({
         test_id,
         test_type,
@@ -97,6 +96,7 @@ class TestController {
         schedule_end,
         duration,
         total_marks: totalMarks,
+        questions_count: questions.length,
       });
 
       for (let questionData of questions) {

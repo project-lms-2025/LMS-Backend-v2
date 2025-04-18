@@ -1,10 +1,10 @@
 import pool from "../../config/databasePool.js";
 
 class TestModel {
-  static async createTest({ test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type }) {
+  static async createTest({ test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count }) {
     const queryStr = `
-      INSERT INTO tests (test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tests (test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const connection = await pool.getConnection();
@@ -13,11 +13,11 @@ class TestModel {
       await connection.beginTransaction();
 
       await connection.query(queryStr, [
-        test_id, teacher_id, course_id || null, series_id || null, title, description, schedule_start, schedule_end, duration, total_marks, test_type
+        test_id, teacher_id, course_id || null, series_id || null, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count
       ]);
 
       await connection.commit();
-      return { test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type };
+      return { test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count };
     } catch (err) {
       await connection.rollback();
       console.error(err);
