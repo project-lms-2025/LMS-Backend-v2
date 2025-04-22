@@ -1,10 +1,24 @@
 import pool from "../../config/databasePool.js";
 
 class TestModel {
-  static async createTest({ test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count }) {
+  static async createTest({
+    test_id,
+    teacher_id,
+    course_id,
+    series_id,
+    title,
+    description,
+    schedule_start,
+    schedule_end,
+    duration,
+    total_marks,
+    test_type,
+    questions_count,
+    selected_exam,
+  }) {
     const queryStr = `
-      INSERT INTO tests (test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO tests (test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count, selected_exam)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const connection = await pool.getConnection();
@@ -13,11 +27,37 @@ class TestModel {
       await connection.beginTransaction();
 
       await connection.query(queryStr, [
-        test_id, teacher_id, course_id || null, series_id || null, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count
+        test_id,
+        teacher_id,
+        course_id || null,
+        series_id || null,
+        title,
+        description,
+        schedule_start,
+        schedule_end,
+        duration,
+        total_marks,
+        test_type,
+        questions_count,
+        selected_exam,
       ]);
 
       await connection.commit();
-      return { test_id, teacher_id, course_id, series_id, title, description, schedule_start, schedule_end, duration, total_marks, test_type, questions_count };
+      return {
+        test_id,
+        teacher_id,
+        course_id,
+        series_id,
+        title,
+        description,
+        schedule_start,
+        schedule_end,
+        duration,
+        total_marks,
+        test_type,
+        questions_count,
+        selected_exam,
+      };
     } catch (err) {
       await connection.rollback();
       console.error(err);
@@ -40,13 +80,13 @@ class TestModel {
       LEFT JOIN options o ON q.question_id = o.question_id
       WHERE t.test_id = ?;
     `;
-    
+
     const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
       const [rows] = await connection.query(queryStr, [test_id]);
-      console.log(rows); 
+      console.log(rows);
 
       if (rows.length === 0) return null;
 
@@ -63,11 +103,13 @@ class TestModel {
         duration: rows[0]?.duration,
         total_marks: rows[0]?.total_marks,
         created_at: rows[0]?.created_at,
-        questions: []
+        questions: [],
       };
 
-      rows.forEach(row => {
-        let question = testData.questions.find(q => q.question_id === row.question_id);
+      rows.forEach((row) => {
+        let question = testData.questions.find(
+          (q) => q.question_id === row.question_id
+        );
         if (!question && row.question_id) {
           question = {
             question_id: row.question_id,
@@ -77,7 +119,7 @@ class TestModel {
             section: row.section,
             positive_marks: row.positive_marks,
             negative_marks: row.negative_marks,
-            options: []
+            options: [],
           };
           testData.questions.push(question);
         }
@@ -87,7 +129,7 @@ class TestModel {
             option_id: row.option_id,
             option_text: row.option_text,
             image_url: row.option_image_url,
-            ...(role !== 'student' ? { is_correct: row.is_correct } : {})
+            ...(role !== "student" ? { is_correct: row.is_correct } : {}),
           });
         }
       });
@@ -143,22 +185,22 @@ class TestModel {
       LEFT JOIN courses c ON t.course_id = c.course_id
       LEFT JOIN test_series s ON t.series_id = s.series_id
     `;
-  
+
     let conditions = [];
     let values = [];
-  
+
     if (test_type) {
-      conditions.push('t.test_type = ?');
+      conditions.push("t.test_type = ?");
       values.push(test_type);
     }
-  
-    if (user_data.role === 'teacher') {
-      conditions.push('t.teacher_id = ?');
+
+    if (user_data.role === "teacher") {
+      conditions.push("t.teacher_id = ?");
       values.push(user_data.user_id);
     }
-  
+
     if (conditions.length > 0) {
-      queryStr += ' WHERE ' + conditions.join(' AND ');
+      queryStr += " WHERE " + conditions.join(" AND ");
     }
 
     const connection = await pool.getConnection();
@@ -177,7 +219,7 @@ class TestModel {
       connection.release();
     }
   }
-  
+
   static async getTestsInEntity({ series_id, course_id }) {
     let queryStr = `
       SELECT t.*, 
@@ -187,25 +229,25 @@ class TestModel {
       LEFT JOIN courses c ON t.course_id = c.course_id
       LEFT JOIN test_series s ON t.series_id = s.series_id
     `;
-  
+
     let conditions = [];
     let values = [];
-  
+
     if (series_id) {
-      conditions.push('t.series_id = ?');
+      conditions.push("t.series_id = ?");
       values.push(series_id);
     }
     if (course_id) {
-      conditions.push('t.course_id = ?');
+      conditions.push("t.course_id = ?");
       values.push(course_id);
     }
-  
+
     if (!series_id && !course_id) {
       throw new Error("You must provide either series_id or course_id.");
     }
-  
+
     if (conditions.length > 0) {
-      queryStr += ' WHERE ' + conditions.join(' AND ');
+      queryStr += " WHERE " + conditions.join(" AND ");
     }
 
     const connection = await pool.getConnection();
@@ -226,14 +268,19 @@ class TestModel {
   }
 
   static async updateTest(test_id, updatedFields) {
-    const updates = Object.entries(updatedFields).map(([key, value]) => `${key} = ?`).join(", ");
+    const updates = Object.entries(updatedFields)
+      .map(([key, value]) => `${key} = ?`)
+      .join(", ");
     const queryStr = `UPDATE tests SET ${updates} WHERE test_id = ?`;
 
     const connection = await pool.getConnection();
 
     try {
       await connection.beginTransaction();
-      await connection.query(queryStr, [...Object.values(updatedFields), test_id]);
+      await connection.query(queryStr, [
+        ...Object.values(updatedFields),
+        test_id,
+      ]);
 
       await connection.commit();
       return { test_id, ...updatedFields };
