@@ -97,7 +97,7 @@ router.post(
 router.get(
   "/classes",
   AuthMiddleware.auth,
-  await RoleMiddleware.checkRole(["admin", "teacher"]),
+  // await RoleMiddleware.checkRole(["admin", "teacher"]),
   ClassController.getAllClasses
 );
 

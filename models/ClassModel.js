@@ -108,6 +108,7 @@ class ClassModel {
 
   static async deleteClass(class_id) {
     const query = "DELETE FROM classes WHERE class_id = ?";
+    console.log(query);
     try {
       const results = await this.queryDatabase(query, [class_id]);
       return results.affectedRows
