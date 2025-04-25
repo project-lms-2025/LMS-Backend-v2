@@ -1,4 +1,4 @@
-import ResultModel from '../models/ResultModel.js';
+import ResultModel from "../models/ResultModel.js";
 
 class ResultController {
   static async getAllResults(req, res) {
@@ -17,27 +17,19 @@ class ResultController {
 
     try {
       const testData = await ResultModel.getDetailedResult(test_id, student_id);
-      
+
       if (testData) {
         return res.json(testData);
       } else {
-        return res.status(404).json({ message: "No results found for this test and student." });
+        return res
+          .status(404)
+          .json({ message: "No results found for this test and student." });
       }
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ message: "Error retrieving detailed results." });
-    }
-  }
-
-  static async generateResult(req, res) {
-    const { test_id } = req.params;
-
-    try {
-      await ResultModel.generateResult(test_id);
-      return res.json({ message: "Scores calculated and stored successfully", test_id });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error calculating and storing scores for all students" });
+      return res
+        .status(500)
+        .json({ message: "Error retrieving detailed results." });
     }
   }
 }

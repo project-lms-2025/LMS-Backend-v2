@@ -123,26 +123,6 @@ class StudentResponseModel {
     }
   }
 
-  static async updateResponse(response_id, updatedFields) {
-    const conn = await pool.getConnection();
-    const updates = Object.entries(updatedFields)
-      .map(([key, value]) => `${key} = ?`)
-      .join(", ");
-    const queryStr = `UPDATE student_responses SET ${updates} WHERE response_id = ?`;
-
-    try {
-      await conn.query(queryStr, [
-        ...Object.values(updatedFields),
-        response_id,
-      ]);
-      return { response_id, ...updatedFields };
-    } catch (err) {
-      throw new Error(`Error updating response: ${err.message}`);
-    } finally {
-      conn.release();
-    }
-  }
-
   static async deleteResponse(response_id) {
     const conn = await pool.getConnection();
     const queryStr = `DELETE FROM student_responses WHERE response_id = ?`;
