@@ -1,20 +1,34 @@
-import generateZoomSignature from "../services/zoomService.js";
+import * as zoomService from "../services/zoomService.js";
 
-const generateZoomSignatureHandler = async (req, res) => {
+export const createMeeting = async (req, res) => {
   try {
-    const { meetingNumber, role } = req.body; // Expect meetingNumber and role (1 for host, 0 for participant)
-
-    // Validate input
-    if (!meetingNumber || !role) {
-      return res.status(400).send("Meeting number and role are required");
-    }
-
-    const signature = await generateZoomSignature(meetingNumber, role);
-    res.status(200).json({ signature });
+    const meetingData = req.body;
+    const meeting = await zoomService.createMeeting(meetingData);
+    res.json(meeting);
   } catch (error) {
-    console.error("Error generating Zoom signature:", error);
-    res.status(500).send("Internal Server Error");
+    console.error("Error creating meeting:", error.message);
+    res.status(500).json({ error: "Failed to create meeting" });
   }
 };
 
-export default generateZoomSignatureHandler;
+export const getMeetingDetails = async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+    const meetingDetails = await zoomService.getMeetingDetails(meetingId);
+    res.json(meetingDetails);
+  } catch (error) {
+    console.error("Error getting meeting details:", error.message);
+    res.status(500).json({ error: "Failed to get meeting details" });
+  }
+};
+
+export const generateSignature = (req, res) => {
+  try {
+    const { meetingNumber, role } = req.body;
+    const signature = zoomService.generateSignature(meetingNumber, role);
+    res.json({ signature });
+  } catch (error) {
+    console.error("Error generating signature:", error.message);
+    res.status(500).json({ error: "Failed to generate signature" });
+  }
+};
