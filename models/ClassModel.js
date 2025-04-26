@@ -24,9 +24,10 @@ class ClassModel {
       class_date_time,
       recording_url,
       zoom_meeting_url,
+      session_passcode,
     } = cls;
     const query =
-      "INSERT INTO classes (class_id, course_id, teacher_id, class_title, class_date_time, recording_url, zoom_meeting_url) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      "INSERT INTO classes (class_id, course_id, teacher_id, class_title, class_date_time, recording_url, zoom_meeting_url, session_passcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     try {
       await this.queryDatabase(query, [
         class_id,
@@ -36,6 +37,7 @@ class ClassModel {
         class_date_time,
         recording_url,
         zoom_meeting_url,
+        session_passcode,
       ]);
       return {
         success: true,
