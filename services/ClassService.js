@@ -85,6 +85,7 @@ class ClassService {
       class_date_time,
       recording_url,
       zoom_meeting_url: zoomMeetingUrl.join_url,
+      session_passcode: zoomMeetingUrl.password,
     }; // Use "cls" here
     return ClassModel.createClass(cls);
   }
